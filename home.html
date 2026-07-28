@@ -377,7 +377,7 @@
     }
 
     window.addEventListener("totto:cloud-synced",()=>{loadLocal();render();});
-    window.TottoCloud.onAuthStateChange((event,session)=>{
+    window.TottoCloud?.onAuthStateChange((event,session)=>{
       if(event==="SIGNED_IN"||event==="SIGNED_OUT")updateAccount(session);
     });
     loadLocal();
@@ -411,9 +411,11 @@
       setTimeout(()=>{location.href="index.html?from=home";},720);
     });
     render();
-    window.TottoCloud.getSession().then(updateAccount).catch(error=>{
-      $("#loginStatus").textContent="账号服务暂时不可用："+error.message;
-    });
+    if(window.TottoCloud?.getSession){
+      window.TottoCloud.getSession().then(updateAccount).catch(error=>{
+        $("#loginStatus").textContent="账号服务暂时不可用："+error.message;
+      });
+    }
   })();
   </script>
 </body>

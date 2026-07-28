@@ -31,6 +31,7 @@ test("home transition is carried into the game", async () => {
   assert.match(game, /id="gameTotto3D"/);
   assert.match(game, /fromHome/);
   assert.match(game, /Totto3D\.mount/);
+  assert.match(game, /window\.Totto3D\?\.mount/);
 });
 
 test("motion and fallback safeguards remain available", async () => {

@@ -92,6 +92,8 @@
     .primary{width:100%;border:0;border-radius:14px;padding:12px;background:linear-gradient(145deg,#ed8871,#d95c50);color:#fff;font-weight:800}
     .primary:disabled{opacity:.5}.secondary{width:100%;margin-top:8px;border:0;background:none;color:var(--muted);padding:8px}
     .cloud-note{padding:10px;border-radius:13px;background:#fff0d3;color:#96633e;font-size:10px;line-height:1.5;margin-bottom:12px}
+    .login-status{min-height:18px;margin:0 0 8px!important;color:#b2634e!important;font-weight:700;text-align:center}
+    .hidden{display:none!important}
     @media(max-width:370px){.app{padding-left:9px;padding-right:9px}.room{height:355px}.character{width:220px;height:250px}.wardrobe{gap:5px}}
   </style>
 </head>
@@ -180,13 +182,17 @@
     <div class="dialog">
       <h2>登录后跨设备养托托</h2>
       <p>登录后会同步通关关数、金币、最高分和已解锁皮肤。游客进度也可以合并进账号。</p>
-      <div class="cloud-note">云端账号接口已经预留。下一步接入 Supabase 后，这里会发送邮箱验证码；目前请继续使用游客模式，进度仍会自动保存在本机。</div>
-      <input type="email" placeholder="你的邮箱" disabled>
-      <button class="primary" disabled>发送登录验证码</button>
+      <div class="cloud-note" id="cloudNote">输入邮箱后，我们会发送一封安全登录邮件。第一次登录时，本机的游客进度会自动合并到账号。</div>
+      <input id="emailInput" type="email" autocomplete="email" placeholder="你的邮箱">
+      <button class="primary" id="emailLoginBtn">发送登录邮件</button>
+      <p class="login-status" id="loginStatus"></p>
+      <button class="primary hidden" id="logoutBtn">退出当前账号</button>
       <button class="secondary" id="closeLogin">先用游客模式</button>
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="cloud-sync.js"></script>
   <script>
   (()=> {
     "use strict";
@@ -200,10 +206,16 @@
     const $=s=>document.querySelector(s);
     const $$=s=>[...document.querySelectorAll(s)];
     function read(key,fallback){try{return JSON.parse(localStorage.getItem(key))??fallback}catch(e){return fallback}}
-    const skins=read(SKIN_KEY,[]);
-    const progress={completed:[],coins:0,clears:0,bestScore:0,...read(PROGRESS_KEY,{})};
+    let skins=[];
+    let progress={completed:[],coins:0,clears:0,bestScore:0};
     let equipped=localStorage.getItem(EQUIPPED_KEY)||"default";
-    if(equipped!=="default"&&!skins.includes(equipped))equipped="default";
+
+    function loadLocal(){
+      skins=read(SKIN_KEY,[]);
+      progress={completed:[],coins:0,clears:0,bestScore:0,...read(PROGRESS_KEY,{})};
+      equipped=localStorage.getItem(EQUIPPED_KEY)||"default";
+      if(equipped!=="default"&&!skins.includes(equipped))equipped="default";
+    }
 
     function render(){
       $("#levelCount").textContent=progress.completed.length;
@@ -221,6 +233,7 @@
     $$(".skin[data-skin]").forEach(btn=>btn.addEventListener("click",()=>{
       if(btn.disabled)return;
       equipped=btn.dataset.skin;localStorage.setItem(EQUIPPED_KEY,equipped);render();
+      window.TottoCloud?.syncLocalProgress().catch(()=>{});
       const character=$("#character");character.classList.remove("bounce");void character.offsetWidth;character.classList.add("bounce");
     }));
     $$(".nav").forEach(btn=>btn.addEventListener("click",()=>{
@@ -231,7 +244,54 @@
     $("#accountBtn").addEventListener("click",()=>$("#loginModal").classList.add("show"));
     $("#closeLogin").addEventListener("click",()=>$("#loginModal").classList.remove("show"));
     $("#loginModal").addEventListener("click",e=>{if(e.target.id==="loginModal")e.currentTarget.classList.remove("show")});
+    $("#emailLoginBtn").addEventListener("click",async()=>{
+      const email=$("#emailInput").value.trim();
+      const status=$("#loginStatus");
+      if(!email||!$("#emailInput").validity.valid){status.textContent="请先输入正确的邮箱";return;}
+      $("#emailLoginBtn").disabled=true;status.textContent="正在发送…";
+      try{
+        await window.TottoCloud.signInWithEmail(email);
+        status.textContent="登录邮件已发送，请去邮箱点击链接";
+      }catch(error){
+        status.textContent="发送失败："+(error.message||"请稍后重试");
+      }finally{$("#emailLoginBtn").disabled=false;}
+    });
+    $("#logoutBtn").addEventListener("click",async()=>{
+      $("#logoutBtn").disabled=true;
+      try{await window.TottoCloud.signOut();location.reload();}
+      catch(error){$("#loginStatus").textContent="退出失败："+error.message;$("#logoutBtn").disabled=false;}
+    });
+
+    async function updateAccount(session){
+      const signedIn=Boolean(session);
+      $("#emailInput").classList.toggle("hidden",signedIn);
+      $("#emailLoginBtn").classList.toggle("hidden",signedIn);
+      $("#logoutBtn").classList.toggle("hidden",!signedIn);
+      $("#accountBtn").textContent=signedIn?"☁️ 已登录":"👤 登录同步";
+      $("#welcome").textContent=signedIn?`欢迎回来，${session.user.email}`:"游客也可以先养托托";
+      $("#cloudNote").textContent=signedIn
+        ?`当前账号：${session.user.email}。通关记录、金币和皮肤会自动同步。`
+        :"输入邮箱后，我们会发送一封安全登录邮件。第一次登录时，本机的游客进度会自动合并到账号。";
+      if(!signedIn)return;
+      $("#loginStatus").textContent="正在合并云端进度…";
+      try{
+        await window.TottoCloud.syncLocalProgress();
+        loadLocal();render();
+        $("#loginStatus").textContent="云端进度已同步 ✓";
+      }catch(error){
+        $("#loginStatus").textContent="同步暂未完成："+(error.message||"请稍后重试");
+      }
+    }
+
+    window.addEventListener("totto:cloud-synced",()=>{loadLocal();render();});
+    window.TottoCloud.onAuthStateChange((event,session)=>{
+      if(event==="SIGNED_IN"||event==="SIGNED_OUT")updateAccount(session);
+    });
+    loadLocal();
     render();
+    window.TottoCloud.getSession().then(updateAccount).catch(error=>{
+      $("#loginStatus").textContent="账号服务暂时不可用："+error.message;
+    });
   })();
   </script>
 </body>

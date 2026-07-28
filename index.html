@@ -280,6 +280,8 @@
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="cloud-sync.js"></script>
   <script>
   (() => {
     "use strict";
@@ -555,6 +557,7 @@
       progress.clears+=1;
       progress.bestScore=Math.max(progress.bestScore||0,state.score);
       localStorage.setItem(PROGRESS_KEY,JSON.stringify(progress));
+      window.TottoCloud?.syncLocalProgress().catch(()=>{});
     }
     function showToast(text){
       els.toast.textContent=text;els.toast.classList.add("show");
@@ -571,11 +574,15 @@
     $("#startBtn").addEventListener("click",()=>{els.intro.classList.remove("show");startTimer();});
     document.addEventListener("visibilitychange",()=>{if(document.hidden)save();});
     window.addEventListener("beforeunload",save);
+    window.addEventListener("totto:cloud-synced",()=>{els.brandTotto.src=getEquippedAsset();});
 
     const resumed=load();
     render();
     if(resumed){startTimer();showToast("已继续上次没有捞完的火锅");}
     else els.intro.classList.add("show");
+    window.TottoCloud?.getSession().then(session=>{
+      if(session)return window.TottoCloud.syncLocalProgress();
+    }).catch(()=>{});
   })();
   </script>
 </body>

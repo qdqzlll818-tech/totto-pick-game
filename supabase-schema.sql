@@ -30,6 +30,15 @@ alter table public.profiles enable row level security;
 alter table public.level_progress enable row level security;
 alter table public.user_skins enable row level security;
 
+grant usage on schema public to authenticated;
+grant select, insert, update, delete on public.profiles to authenticated;
+grant select, insert, update, delete on public.level_progress to authenticated;
+grant select, insert, update, delete on public.user_skins to authenticated;
+
+drop policy if exists "Users manage own profile" on public.profiles;
+drop policy if exists "Users manage own progress" on public.level_progress;
+drop policy if exists "Users manage own skins" on public.user_skins;
+
 create policy "Users manage own profile" on public.profiles
   for all using (auth.uid() = id) with check (auth.uid() = id);
 create policy "Users manage own progress" on public.level_progress

@@ -394,12 +394,14 @@
       const lines=interactionLines[event.detail?.type]||interactionLines["tap-body"];
       say(lines[Math.floor(Math.random()*lines.length)]);
     });
-    window.Totto3D.mount($("#tottoStage"),{skin:equipped,mode:"home",interactive:true})
-      .then(controller=>{
-        tottoController=controller;
-        $("#tottoFallback").classList.add("is-3d-ready");
-      })
-      .catch(()=>{$("#tottoFallback").classList.remove("is-3d-ready");});
+    if(window.Totto3D?.mount){
+      window.Totto3D.mount($("#tottoStage"),{skin:equipped,mode:"home",interactive:true})
+        .then(controller=>{
+          tottoController=controller;
+          $("#tottoFallback").classList.add("is-3d-ready");
+        })
+        .catch(()=>{$("#tottoFallback").classList.remove("is-3d-ready");});
+    }
     $("#startAdventure").addEventListener("click",async()=>{
       const button=$("#startAdventure");
       if(button.disabled)return;

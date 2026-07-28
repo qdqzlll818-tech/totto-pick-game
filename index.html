@@ -601,15 +601,15 @@
 
     const resumed=load();
     render();
-    else if(fromHome){startTimer();showToast("托托已经到达火锅局，开始救援！");}
     if(resumed){startTimer();showToast("已继续上次没有捞完的火锅");}
+    else if(fromHome){startTimer();showToast("托托已经到达火锅局，开始救援！");}
+    else els.intro.classList.add("show");
     window.Totto3D.mount($("#gameTotto3D"),{
       skin:localStorage.getItem(EQUIPPED_KEY)||"default",mode:"game",interactive:false
     }).then(controller=>{
       gameTotto=controller;$("#gameTotto3D").classList.add("ready");
       if(fromHome)gameTotto.play("start");
     }).catch(()=>{});
-    else els.intro.classList.add("show");
     window.TottoCloud?.getSession().then(session=>{
       if(session)return window.TottoCloud.syncLocalProgress();
     }).catch(()=>{});

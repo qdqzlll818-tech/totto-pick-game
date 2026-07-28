@@ -1,0 +1,9 @@
+{
+  "name": "totto-pick-game",
+  "private": true,
+  "scripts": {
+    "serve": "python3 -m http.server 4173",
+    "test": "node --test tests/*.test.mjs",
+    "test:syntax": "node --check cloud-sync.js && node --check totto-3d.js"
+  }
+}

@@ -4,7 +4,6 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
   <meta name="theme-color" content="#f6ddc3">
-  <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.module.js">
   <title>托托的小屋</title>
   <style>
     :root{
@@ -145,13 +144,41 @@
     .rescue-portal::after{content:"♨";position:absolute;left:31px;top:-39px;color:rgba(255,255,255,.72);font-size:38px;animation:steamFloat 2.4s ease-in-out infinite}
     @keyframes portalPulse{50%{transform:scale(1.035);filter:drop-shadow(0 18px 20px rgba(164,55,36,.29))}}
     @keyframes steamFloat{50%{transform:translateY(-12px);opacity:.35}}
-    #tottoStage{touch-action:pan-y}
-    #tottoStage canvas{position:absolute;z-index:5;inset:0;width:100%;height:100%;outline:0;cursor:pointer}
+    #tottoStage{touch-action:pan-y;perspective:950px}
     .totto-fallback{
-      position:absolute;z-index:4;left:50%;bottom:60px;transform:translateX(-50%);width:310px;height:360px;
-      object-fit:contain;filter:drop-shadow(0 20px 15px rgba(79,48,33,.18));
+      --tilt-x:0deg;--tilt-y:0deg;--move-x:0px;--move-y:0px;
+      position:absolute;z-index:6;left:50%;bottom:54px;width:285px;height:335px;
+      object-fit:contain;cursor:pointer;user-select:none;-webkit-user-drag:none;
+      transform-origin:50% 72%;transform-style:preserve-3d;will-change:transform,filter;
+      transform:
+        translateX(calc(-50% + var(--move-x))) translateY(var(--move-y))
+        rotateX(var(--tilt-x)) rotateY(var(--tilt-y));
+      filter:drop-shadow(0 20px 15px rgba(79,48,33,.19));
+      transition:transform .22s cubic-bezier(.2,.75,.25,1),filter .22s ease;
+      animation:portraitIdle 3.8s ease-in-out infinite;
     }
-    .totto-fallback.is-3d-ready{opacity:0;pointer-events:none}
+    .totto-fallback:focus-visible{outline:3px solid rgba(223,113,96,.55);outline-offset:5px;border-radius:42%}
+    .totto-fallback.is-patted{animation:portraitPat .48s cubic-bezier(.2,.9,.3,1)}
+    .totto-fallback.is-changing{animation:portraitChange .58s cubic-bezier(.2,.9,.25,1)}
+    .totto-fallback.is-departing{animation:portraitDepart .72s cubic-bezier(.55,0,.25,1) forwards}
+    @keyframes portraitIdle{
+      0%,100%{transform:translateX(calc(-50% + var(--move-x))) translateY(var(--move-y)) rotateX(var(--tilt-x)) rotateY(var(--tilt-y))}
+      50%{transform:translateX(calc(-50% + var(--move-x))) translateY(calc(var(--move-y) - 7px)) rotateX(var(--tilt-x)) rotateY(var(--tilt-y)) scale(1.012)}
+    }
+    @keyframes portraitPat{
+      0%,100%{transform:translateX(calc(-50% + var(--move-x))) translateY(var(--move-y)) rotateX(var(--tilt-x)) rotateY(var(--tilt-y))}
+      42%{transform:translateX(calc(-50% + var(--move-x))) translateY(calc(var(--move-y) - 17px)) rotate(-3deg) scale(1.055)}
+      72%{transform:translateX(calc(-50% + var(--move-x))) translateY(calc(var(--move-y) - 4px)) rotate(2deg) scale(.99)}
+    }
+    @keyframes portraitChange{
+      0%,100%{transform:translateX(-50%) scale(1);filter:drop-shadow(0 20px 15px rgba(79,48,33,.19))}
+      45%{transform:translateX(-50%) translateY(-10px) rotateY(90deg) scale(.9);filter:drop-shadow(0 12px 10px rgba(79,48,33,.13))}
+    }
+    @keyframes portraitDepart{
+      0%{transform:translateX(-50%) scale(1)}
+      35%{transform:translateX(-50%) translateY(-18px) rotate(-4deg) scale(1.05)}
+      100%{transform:translateX(88px) translateY(-45px) rotate(10deg) scale(.62);opacity:0}
+    }
     .speech{
       z-index:8;right:65px;top:210px;max-width:150px;padding:10px 12px;border-radius:17px 17px 4px 17px;
       transition:transform .18s ease,opacity .18s ease;
@@ -194,7 +221,7 @@
     </header>
 
     <section class="view active" id="homeView">
-      <div class="room-stage" id="tottoStage" aria-label="可以互动的3D托托">
+      <div class="room-stage" id="tottoStage" aria-label="可以互动的托托">
         <section class="stats" aria-label="养成数据">
           <div class="stat"><b id="levelCount">0</b><span>通关关卡</span></div>
           <div class="stat"><b id="coinCount">0</b><span>托托金币</span></div>
@@ -204,7 +231,7 @@
         <div class="mission-tag">🍲 火锅救援进行中</div>
         <div class="rescue-portal" aria-hidden="true"></div>
         <div class="speech" id="speech">点点我，我们一起出发吧！</div>
-        <img class="totto-fallback" id="tottoFallback" src="assets/characters/totto-default.webp" alt="托托">
+        <img class="totto-fallback" id="tottoFallback" src="assets/characters/totto-default.webp" alt="托托" role="button" tabindex="0" draggable="false" aria-label="摸摸托托">
         <button class="adventure" id="startAdventure">和托托一起出发　➜</button>
         <div class="nameplate">Totto · 托托</div>
       </div>
@@ -212,7 +239,7 @@
       <section class="panel teaser">
         <div class="panel-head"><h2>今日状态</h2><span id="clearText">还没有救出托托</span></div>
         <div class="map">
-          <a class="level" href="index.html?from=home&amp;v=4">
+          <a class="level" href="index.html?from=home&amp;v=5">
             <span class="level-icon">🍲</span>
             <span class="level-text"><b>继续去火锅局</b><small>三个一样就捞走</small></span>
             <span class="level-reward">通关<br>+100 🪙</span>
@@ -281,7 +308,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="totto-3d.js?v=3"></script>
   <script src="cloud-sync.js"></script>
   <script>
   (()=> {
@@ -298,7 +324,6 @@
     function read(key,fallback){try{return JSON.parse(localStorage.getItem(key))??fallback}catch(e){return fallback}}
     let skins=[];
     let progress={completed:[],coins:0,clears:0,bestScore:0};
-    let tottoController=null;
     let talking=false;
     let equipped=localStorage.getItem(EQUIPPED_KEY)||"default";
 
@@ -316,7 +341,6 @@
       $("#clearText").textContent=progress.clears?`已经救出托托 ${progress.clears} 次`:"还没有救出托托";
       $("#hotpotStatus").textContent=progress.completed.includes("hotpot")?"已通关 ✓":"可挑战";
       $("#tottoFallback").src=ASSETS[equipped]||ASSETS.default;
-      tottoController?.setSkin(equipped);
       $("#speech").textContent=equipped==="hotpot-chef"?"小厨神准备好再下一锅啦！":"今天也想和你一起去捞东西！";
       $$(".skin[data-skin]").forEach(btn=>{
         const id=btn.dataset.skin,owned=id==="default"||skins.includes(id);
@@ -327,7 +351,7 @@
       if(btn.disabled)return;
       equipped=btn.dataset.skin;localStorage.setItem(EQUIPPED_KEY,equipped);render();
       window.TottoCloud?.syncLocalProgress().catch(()=>{});
-      tottoController?.play("tap-body");
+      animatePortrait("is-changing");
     }));
     $$(".nav").forEach(btn=>btn.addEventListener("click",()=>{
       $$(".nav").forEach(n=>n.classList.toggle("active",n===btn));
@@ -390,25 +414,57 @@
       talking=true;const speech=$("#speech");speech.textContent=text;speech.classList.add("talk");
       setTimeout(()=>{speech.classList.remove("talk");talking=false;},360);
     }
-    window.addEventListener("totto-interaction",event=>{
-      const lines=interactionLines[event.detail?.type]||interactionLines["tap-body"];
-      say(lines[Math.floor(Math.random()*lines.length)]);
-    });
-    if(window.Totto3D?.mount){
-      window.Totto3D.mount($("#tottoStage"),{skin:equipped,mode:"home",interactive:true})
-        .then(controller=>{
-          tottoController=controller;
-          $("#tottoFallback").classList.add("is-3d-ready");
-        })
-        .catch(()=>{$("#tottoFallback").classList.remove("is-3d-ready");});
+    const portrait=$("#tottoFallback");
+    const stage=$("#tottoStage");
+    const portraitClasses=["is-patted","is-changing","is-departing"];
+    function resetPortraitPose(){
+      portrait.style.setProperty("--tilt-x","0deg");
+      portrait.style.setProperty("--tilt-y","0deg");
+      portrait.style.setProperty("--move-x","0px");
+      portrait.style.setProperty("--move-y","0px");
     }
-    $("#startAdventure").addEventListener("click",async()=>{
+    function animatePortrait(action="is-patted"){
+      portraitClasses.forEach(name=>portrait.classList.remove(name));
+      void portrait.offsetWidth;
+      portrait.classList.add(action);
+      if(action!=="is-departing"){
+        portrait.addEventListener("animationend",()=>portrait.classList.remove(action),{once:true});
+      }
+    }
+    function greetFromPointer(event){
+      const rect=portrait.getBoundingClientRect();
+      const type=event.clientY<rect.top+rect.height*.52?"tap-head":"tap-body";
+      const lines=interactionLines[type];
+      say(lines[Math.floor(Math.random()*lines.length)]);
+      animatePortrait("is-patted");
+    }
+    stage.addEventListener("pointermove",event=>{
+      if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+      const rect=stage.getBoundingClientRect();
+      const x=Math.max(-.5,Math.min(.5,(event.clientX-rect.left)/rect.width-.5));
+      const y=Math.max(-.5,Math.min(.5,(event.clientY-rect.top)/rect.height-.5));
+      portrait.style.setProperty("--tilt-x",`${-y*5}deg`);
+      portrait.style.setProperty("--tilt-y",`${x*8}deg`);
+      portrait.style.setProperty("--move-x",`${x*9}px`);
+      portrait.style.setProperty("--move-y",`${y*5}px`);
+    });
+    stage.addEventListener("pointerleave",resetPortraitPose);
+    portrait.addEventListener("click",greetFromPointer);
+    portrait.addEventListener("keydown",event=>{
+      if(event.key!=="Enter"&&event.key!==" ")return;
+      event.preventDefault();
+      const lines=interactionLines["tap-head"];
+      say(lines[Math.floor(Math.random()*lines.length)]);
+      animatePortrait("is-patted");
+    });
+    $("#startAdventure").addEventListener("click",()=>{
       const button=$("#startAdventure");
       if(button.disabled)return;
       button.disabled=true;button.textContent="托托正在冲向火锅局…";
+      resetPortraitPose();
+      animatePortrait("is-departing");
       document.body.classList.add("departing");
-      try{await tottoController?.play("start");}catch(e){}
-      setTimeout(()=>{location.href="index.html?from=home&v=4";},720);
+      setTimeout(()=>{location.href="index.html?from=home&v=5";},720);
     });
     render();
     if(window.TottoCloud?.getSession){

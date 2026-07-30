@@ -66,6 +66,29 @@ test("saves containing retired item types are discarded instead of restoring old
   assert.equal(restoreGame(JSON.stringify(state), level), null);
 });
 
+test("known items with an older asset URL migrate without losing the current game", () => {
+  const level = getLevel("garlic");
+  const state = createGame(level, () => 0.42);
+  const themedTotto = state.items.find(item => item.special);
+  themedTotto.asset = "assets/characters/totto-garlic.webp";
+  themedTotto.selected = true;
+  state.score = 70;
+  state.tray.push({
+    uid: themedTotto.uid,
+    type: themedTotto.type,
+    asset: themedTotto.asset,
+    name: themedTotto.name,
+    special: true
+  });
+
+  const restored = restoreGame(JSON.stringify(state), level, () => 0.42);
+  const approvedAsset = "assets/characters/totto-garlic-approved.webp";
+
+  assert.equal(restored.score, 70);
+  assert.equal(restored.items.find(item => item.uid === themedTotto.uid).asset, approvedAsset);
+  assert.equal(restored.tray[0].asset, approvedAsset);
+});
+
 test("old ring-layout saves migrate into a dense pile without losing progress", () => {
   const level = getLevel("garlic");
   const oldSave = createGame(level, () => 0.42);

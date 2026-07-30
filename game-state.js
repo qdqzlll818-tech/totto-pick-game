@@ -87,10 +87,11 @@
         Array.isArray(saved.reserve)
       ) {
         const currentAssets = new Map(resolved.items.map(item => [item.id, item.asset]));
-        const usesCurrentSet = saved.items.every(item =>
-          currentAssets.has(item.type) && currentAssets.get(item.type) === item.asset
-        );
-        if (!usesCurrentSet) return null;
+        const savedEntries = [...saved.items, ...saved.tray, ...saved.reserve];
+        if (!savedEntries.every(item => currentAssets.has(item.type))) return null;
+        savedEntries.forEach(item => {
+          item.asset = currentAssets.get(item.type);
+        });
         if (saved.layoutVersion !== LAYOUT_VERSION) {
           const active = placeItems(saved.items.filter(item => !item.selected), resolved, random);
           const selected = placeItems(saved.items.filter(item => item.selected), resolved, random);

@@ -145,23 +145,16 @@
     @keyframes portalPulse{50%{transform:scale(1.035);filter:drop-shadow(0 18px 20px rgba(164,55,36,.29))}}
     @keyframes steamFloat{50%{transform:translateY(-12px);opacity:.35}}
     #tottoStage{touch-action:pan-y;perspective:950px}
-    .totto-model{
-      --poster-color:transparent;
-      position:absolute;z-index:6;left:50%;bottom:42px;width:365px;height:400px;
-      display:block;background:transparent;cursor:grab;opacity:0;touch-action:pan-y;
-      transform:translateX(-50%) scale(.96);transform-origin:50% 72%;
-      filter:drop-shadow(0 20px 15px rgba(79,48,33,.19));
-      transition:opacity .35s ease,transform .35s cubic-bezier(.2,.75,.25,1);
-    }
-    .totto-model.is-ready{opacity:1;transform:translateX(-50%) scale(1)}
-    .totto-model:active{cursor:grabbing}
-    .totto-fallback{
+    .totto-portrait{
       position:absolute;z-index:6;left:50%;bottom:54px;width:285px;height:335px;
       object-fit:contain;cursor:pointer;user-select:none;-webkit-user-drag:none;
       transform:translateX(-50%);
       filter:drop-shadow(0 20px 15px rgba(79,48,33,.19));
+      transition:transform .25s cubic-bezier(.2,.9,.3,1),filter .25s ease;
     }
-    .totto-fallback:focus-visible{outline:3px solid rgba(223,113,96,.55);outline-offset:5px;border-radius:42%}
+    .totto-portrait.is-tapped{animation:portraitBounce .42s ease}
+    .totto-portrait:focus-visible{outline:3px solid rgba(223,113,96,.55);outline-offset:5px;border-radius:42%}
+    @keyframes portraitBounce{50%{transform:translateX(-50%) translateY(-10px) scale(1.035)}}
     .speech{
       z-index:8;right:65px;top:210px;max-width:150px;padding:10px 12px;border-radius:17px 17px 4px 17px;
       transition:transform .18s ease,opacity .18s ease;
@@ -188,8 +181,7 @@
     .teaser .level{background:transparent;padding:4px 2px}
     @media(max-width:420px){
       .app{padding-left:9px;padding-right:9px}.room-stage{height:69vh;min-height:465px}
-      .totto-model{width:335px;height:375px;bottom:46px}
-      .totto-fallback{width:270px}.rescue-portal{right:-30px}.speech{right:52px;top:205px}
+      .totto-portrait{width:270px}.rescue-portal{right:-30px}.speech{right:52px;top:205px}
       .room-window{left:13px}.mission-tag{left:12px}.wardrobe{gap:5px}
     }
     @media(prefers-reduced-motion:reduce){
@@ -215,27 +207,7 @@
         <div class="mission-tag">🍲 火锅救援进行中</div>
         <div class="rescue-portal" aria-hidden="true"></div>
         <div class="speech" id="speech">点点我，我们一起出发吧！</div>
-        <model-viewer
-          class="totto-model"
-          id="tottoModel"
-          src="assets/models/totto-static-web.glb?v=1"
-          poster="assets/characters/totto-default.webp"
-          alt="可以转动查看的3D托托"
-          aria-label="点击或转动3D托托"
-          tabindex="0"
-          camera-controls
-          disable-zoom
-          interaction-prompt="none"
-          shadow-intensity="1"
-          shadow-softness=".85"
-          exposure="1.05"
-          tone-mapping="neutral"
-          field-of-view="28deg"
-          min-camera-orbit="-35deg 65deg auto"
-          max-camera-orbit="35deg 88deg auto"
-          touch-action="pan-y">
-        </model-viewer>
-        <img class="totto-fallback" id="tottoFallback" src="assets/characters/totto-default.webp" alt="托托" role="button" tabindex="0" draggable="false" aria-label="摸摸托托">
+        <img class="totto-portrait" id="tottoPortrait" src="assets/characters/totto-default.webp?v=2" alt="托托" role="button" tabindex="0" draggable="false" aria-label="摸摸托托">
         <div class="nameplate">Totto · 托托</div>
         <button class="adventure" id="startAdventure">和托托一起出发　➜</button>
       </div>
@@ -257,10 +229,10 @@
         <div class="panel-head"><h2>托托衣柜</h2><span>点击即可换装</span></div>
         <div class="wardrobe" id="wardrobe">
           <button class="skin" data-skin="default">
-            <img src="assets/characters/totto-default.webp" alt="原始托托"><small>原始托托</small>
+            <img src="assets/characters/totto-default.webp?v=2" alt="原始托托"><small>原始托托</small>
           </button>
           <button class="skin" data-skin="hotpot-chef">
-            <img src="assets/characters/totto-hotpot-chef.webp" alt="火锅小厨神"><small>火锅小厨神</small>
+            <img src="assets/characters/totto-hotpot-chef.webp?v=2" alt="火锅小厨神"><small>火锅小厨神</small>
           </button>
           <button class="skin locked" disabled><span class="locked-art">🧄</span><small>蒜香小围裙</small></button>
           <button class="skin locked" disabled><span class="locked-art">🍉</span><small>夏日水果帽</small></button>
@@ -311,7 +283,6 @@
     </div>
   </div>
 
-  <script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer@4.2.0/dist/model-viewer.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="cloud-sync.js"></script>
   <script>
@@ -321,15 +292,12 @@
     const EQUIPPED_KEY="totto-pick-equipped-skin-v1";
     const PROGRESS_KEY="totto-pick-progress-v1";
     const ASSETS={
-      default:"assets/characters/totto-default.webp",
-      "hotpot-chef":"assets/characters/totto-hotpot-chef.webp"
+      default:"assets/characters/totto-default.webp?v=2",
+      "hotpot-chef":"assets/characters/totto-hotpot-chef.webp?v=2"
     };
     const $=s=>document.querySelector(s);
     const $$=s=>[...document.querySelectorAll(s)];
-    const portrait=$("#tottoFallback");
-    const tottoModel=$("#tottoModel");
-    let modelReady=false;
-    let modelFailed=false;
+    const portrait=$("#tottoPortrait");
     function read(key,fallback){try{return JSON.parse(localStorage.getItem(key))??fallback}catch(e){return fallback}}
     let skins=[];
     let progress={completed:[],coins:0,clears:0,bestScore:0};
@@ -355,7 +323,6 @@
         const id=btn.dataset.skin,owned=id==="default"||skins.includes(id);
         btn.disabled=!owned;btn.classList.toggle("locked",!owned);btn.classList.toggle("selected",id===equipped);
       });
-      syncCharacterView();
     }
     $$(".skin[data-skin]").forEach(btn=>btn.addEventListener("click",()=>{
       if(btn.disabled)return;
@@ -424,35 +391,22 @@
       talking=true;const speech=$("#speech");speech.textContent=text;speech.classList.add("talk");
       setTimeout(()=>{speech.classList.remove("talk");talking=false;},360);
     }
-    function syncCharacterView(){
-      const showModel=equipped==="default"&&modelReady&&!modelFailed;
-      tottoModel.classList.toggle("hidden",equipped!=="default"||modelFailed);
-      tottoModel.classList.toggle("is-ready",showModel);
-      portrait.classList.toggle("hidden",showModel);
-    }
-    tottoModel.addEventListener("load",()=>{
-      modelReady=true;
-      modelFailed=false;
-      syncCharacterView();
-    });
-    tottoModel.addEventListener("error",()=>{
-      modelFailed=true;
-      syncCharacterView();
-    });
     function greetFromPointer(event){
       const rect=event.currentTarget.getBoundingClientRect();
       const type=event.clientY<rect.top+rect.height*.52?"tap-head":"tap-body";
       const lines=interactionLines[type];
       say(lines[Math.floor(Math.random()*lines.length)]);
+      portrait.classList.remove("is-tapped");
+      requestAnimationFrame(()=>portrait.classList.add("is-tapped"));
     }
     portrait.addEventListener("click",greetFromPointer);
-    tottoModel.addEventListener("click",greetFromPointer);
-    [portrait,tottoModel].forEach(character=>character.addEventListener("keydown",event=>{
+    portrait.addEventListener("animationend",()=>portrait.classList.remove("is-tapped"));
+    portrait.addEventListener("keydown",event=>{
       if(event.key!=="Enter"&&event.key!==" ")return;
       event.preventDefault();
       const lines=interactionLines["tap-head"];
       say(lines[Math.floor(Math.random()*lines.length)]);
-    }));
+    });
     $("#startAdventure").addEventListener("click",()=>{
       const button=$("#startAdventure");
       if(button.disabled)return;

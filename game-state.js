@@ -8,6 +8,8 @@
 })(typeof globalThis !== "undefined" ? globalThis : this, function createGameState(config) {
   "use strict";
 
+  const LAYOUT_VERSION = 2;
+
   function shuffle(items, random) {
     for (let index = items.length - 1; index > 0; index -= 1) {
       const target = Math.floor(random() * (index + 1));
@@ -57,6 +59,7 @@
 
     return {
       levelId: resolved.id,
+      layoutVersion: LAYOUT_VERSION,
       items: placeItems(pool, resolved, random),
       tray: [],
       reserve: [],
@@ -71,17 +74,25 @@
     };
   }
 
-  function restoreGame(serialized, level) {
+  function restoreGame(serialized, level, random = Math.random) {
     try {
       const saved = typeof serialized === "string" ? JSON.parse(serialized) : serialized;
+      const resolved = config.getLevel(level?.id);
       if (
         saved &&
-        saved.levelId === config.getLevel(level?.id).id &&
+        saved.levelId === resolved.id &&
         saved.status === "playing" &&
         Array.isArray(saved.items) &&
         Array.isArray(saved.tray) &&
         Array.isArray(saved.reserve)
       ) {
+        if (saved.layoutVersion !== LAYOUT_VERSION) {
+          const active = placeItems(saved.items.filter(item => !item.selected), resolved, random);
+          const selected = placeItems(saved.items.filter(item => item.selected), resolved, random);
+          const migrated = new Map([...active, ...selected].map(item => [item.uid, item]));
+          saved.items = saved.items.map(item => migrated.get(item.uid));
+          saved.layoutVersion = LAYOUT_VERSION;
+        }
         return saved;
       }
     } catch {

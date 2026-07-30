@@ -11,7 +11,12 @@ body{
   background:radial-gradient(circle at 12% 4%,rgba(255,255,255,.92),transparent 24%),linear-gradient(155deg,#f7f1e8,#e9d2bd 70%,#dcb99e);
 }
 body.level-garlic{--accent:#72834e;--accent-dark:#4d5d36;--scene-top:#c9c59b;--scene-bottom:#7e694d;--broth:#4a4035}
-body.level-fruit{--accent:#df5f50;--accent-dark:#a33b36;--scene-top:#a9cbc2;--scene-bottom:#91613f;--broth:#503a31}
+body.level-fruit{
+  --ink:#334039;--muted:#6f7d73;--cream:#f4f7ef;--paper:#fbfff8;
+  --accent:#e05e50;--accent-dark:#a9433b;--gold:#ecb34f;
+  --scene-top:#b9d8d0;--scene-bottom:#e9b497;--broth:#f0c77a;
+  --surface:rgba(251,255,248,.92);--shadow:0 22px 48px rgba(47,79,68,.2)
+}
 button,a{font:inherit;color:inherit}
 button{cursor:pointer}
 .game-shell{width:min(100%,610px);min-height:100vh;margin:auto;padding:calc(10px + env(safe-area-inset-top)) 11px calc(92px + env(safe-area-inset-bottom))}
@@ -34,19 +39,52 @@ button{cursor:pointer}
 .mission-icon{font-size:24px}.mission-card div{flex:1}.mission-card small{display:block;font-size:9px;color:var(--muted)}.mission-card strong{font-size:11px}.combo{font-size:10px;font-weight:900;color:var(--accent)}
 .scene{position:relative;height:min(61vh,550px);min-height:430px;overflow:hidden;border-radius:24px;background:linear-gradient(var(--scene-top) 0 48%,var(--scene-bottom) 48%);box-shadow:var(--shadow);isolation:isolate}
 .scene::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 4%,rgba(255,255,255,.6),transparent 36%),linear-gradient(90deg,transparent 49.6%,rgba(72,42,29,.05) 50%,transparent 50.4%);pointer-events:none}
+.level-fruit .scene{
+  background:
+    radial-gradient(circle at 78% 13%,rgba(255,255,255,.7) 0 4%,transparent 15%),
+    repeating-linear-gradient(0deg,rgba(255,255,255,.17) 0 2px,transparent 2px 54px),
+    repeating-linear-gradient(90deg,rgba(255,255,255,.16) 0 2px,transparent 2px 54px),
+    linear-gradient(145deg,#b8d8d0 0 47%,#f2c3a4 47% 100%);
+}
+.level-fruit .scene::before{
+  background:
+    radial-gradient(circle at 50% 5%,rgba(255,255,255,.68),transparent 34%),
+    linear-gradient(120deg,transparent 0 55%,rgba(255,246,211,.22) 55% 64%,transparent 64%);
+}
 .table-props{position:absolute;display:flex;justify-content:space-between;left:5%;right:5%;top:4%;font-size:34px;opacity:.68;filter:drop-shadow(0 8px 4px rgba(74,42,29,.16))}
 .pot{position:absolute;left:50%;top:54%;width:min(98%,560px);aspect-ratio:1.08;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(ellipse at 50% 42%,var(--broth) 0 57%,#4b2421 58% 61%,var(--pot) 62% 75%,#101013 76%);filter:drop-shadow(0 26px 18px rgba(46,29,23,.45));transition:transform .16s ease}
-.level-garlic .pot,.level-fruit .pot{background:radial-gradient(ellipse at 50% 42%,var(--broth) 0 57%,#3b3430 58% 61%,#29282a 62% 75%,#111113 76%)}
+.level-garlic .pot{background:radial-gradient(ellipse at 50% 42%,var(--broth) 0 57%,#3b3430 58% 61%,#29282a 62% 75%,#111113 76%)}
+.level-fruit .pot{
+  background:
+    radial-gradient(ellipse at 50% 42%,#f5d99f 0 54%,#c18c4f 55% 58%,transparent 59%),
+    repeating-radial-gradient(ellipse at 50% 50%,#dca967 0 8px,#c48b4f 9px 15px,#e1b574 16px 22px);
+  filter:drop-shadow(0 25px 18px rgba(72,70,48,.34));
+}
 .pot.shaking{animation:potShake .28s linear}
 @keyframes potShake{25%{transform:translate(-51.2%,-50%) rotate(-1deg)}75%{transform:translate(-48.8%,-50%) rotate(1deg)}}
 .pot-depth{position:absolute;inset:12% 10%;border-radius:50%;background:radial-gradient(ellipse at 42% 28%,rgba(255,255,255,.13),transparent 34%);box-shadow:inset 0 18px 26px rgba(255,255,255,.08),inset 0 -32px 38px rgba(0,0,0,.34)}
+.level-fruit .pot-depth{
+  inset:10% 8%;
+  background:
+    radial-gradient(ellipse at 38% 25%,rgba(255,255,255,.48),transparent 29%),
+    radial-gradient(ellipse at 50% 55%,#e7bd78 0 55%,#c78e50 57% 62%,transparent 63%);
+  box-shadow:inset 0 16px 22px rgba(255,255,255,.25),inset 0 -30px 32px rgba(102,68,34,.18);
+}
 .pot-rim{position:absolute;inset:3.5%;border:6px solid rgba(255,255,255,.12);border-radius:50%;pointer-events:none;box-shadow:inset 0 5px 6px rgba(255,255,255,.14),0 2px 0 rgba(0,0,0,.3)}
+.level-fruit .pot-rim{
+  inset:2.5%;
+  border:10px solid rgba(151,97,43,.32);
+  box-shadow:inset 0 5px 0 rgba(255,241,192,.55),0 4px 0 rgba(111,73,36,.28);
+}
 .items{position:absolute;inset:6% 7%;z-index:3}
 .item{position:absolute;width:100px;height:100px;transform:translate(-50%,-50%) rotate(var(--r)) scale(var(--s,1));z-index:var(--z);border:0;padding:0;background:none;filter:drop-shadow(0 2px 1px rgba(255,255,255,.22)) drop-shadow(0 13px 7px rgba(18,13,11,.48));transition:left .25s ease,top .25s ease,transform .18s ease,opacity .18s ease}
 .item:active{transform:translate(-50%,-50%) rotate(var(--r)) scale(calc(var(--s,1) * .86))}
 .item .emoji{display:grid;place-items:center;width:100%;height:100%;font-size:61px;line-height:1;text-shadow:0 2px 0 rgba(255,255,255,.3),0 7px 5px rgba(35,24,19,.3);transform:rotate(calc(var(--r) * -1)) scaleY(1.04)}
 .item img{width:100%;height:100%;object-fit:contain;filter:saturate(1.08) contrast(1.03)}
+.level-fruit .item img{filter:saturate(1.02) contrast(1.05) drop-shadow(0 2px 1px rgba(255,255,255,.28))}
+.level-fruit .item{width:104px;height:104px}
 .item.special{width:108px;height:108px;filter:drop-shadow(0 2px 1px rgba(255,255,255,.22)) drop-shadow(0 14px 8px rgba(31,20,15,.48))}
+.level-fruit .item.special{width:116px;height:116px}
 .shake-wave{position:absolute;z-index:8;left:50%;top:52%;width:20%;aspect-ratio:1;border:3px solid rgba(255,255,255,.7);border-radius:50%;transform:translate(-50%,-50%) scale(.3);opacity:0;pointer-events:none}
 .shake-wave.show{animation:wave .55s ease-out}
 @keyframes wave{to{opacity:0;transform:translate(-50%,-50%) scale(5)}20%{opacity:.8}}
@@ -81,6 +119,7 @@ button{cursor:pointer}
 .pause-button:focus-visible,.sound-pill:focus-visible,.item:focus-visible,.tools button:focus-visible,.dialog button:focus-visible,.dialog a:focus-visible{outline:3px solid #fff;outline-offset:3px}
 @media(max-width:430px){
   .game-shell{padding-inline:8px}.scene{height:54vh;min-height:390px}.pot{width:102%}.items{inset:6%}.item{width:84px;height:84px}.item .emoji{font-size:61px}.item.special{width:92px;height:92px}
+  .level-fruit .item{width:88px;height:88px}.level-fruit .item.special{width:98px;height:98px}
   .tray{min-height:48px}.slot .emoji{font-size:23px}.topbar{margin-bottom:6px;gap:7px}.mission-card{margin:6px 0}.level-identity>img{display:none}.sound-pill{padding-inline:8px}
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}

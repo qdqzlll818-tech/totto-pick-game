@@ -123,9 +123,13 @@
     $("#missionText").textContent = level.mission;
     $("#introIcon").textContent = level.icon;
     $("#introEyebrow").textContent = `托托救援 · 第${number}关`;
-    $("#introTitle").textContent = level.id === "hotpot" ? "托托掉进火锅啦！" : level.id === "garlic" ? "蒜头托托藏起来啦！" : "水果托托等你找到它！";
-    $("#introCopy").textContent = `点击所有看得见的物品，凑齐三个就能消除。找到三个${level.items.at(-1).name}，完成这次救援！`;
+    $("#introTitle").textContent = level.introTitle || (level.id === "hotpot" ? "托托掉进火锅啦！" : "蒜头托托藏起来啦！");
+    $("#introCopy").textContent = level.introCopy || `点击所有看得见的物品，凑齐三个就能消除。找到三个${level.items.at(-1).name}，完成这次救援！`;
     $("#introTotto").src = level.skinAsset;
+    $("#pot").setAttribute("aria-label", level.containerLabel || `装满物品的${level.title}`);
+    if (Array.isArray(level.sceneProps)) {
+      $("#tableProps").innerHTML = level.sceneProps.map(prop => `<span>${prop}</span>`).join("");
+    }
     $("#remaining").textContent = level.total;
   }
 

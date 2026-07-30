@@ -42,6 +42,25 @@ test("garlic mission and reward use the cache-safe approved Totto artwork", () =
   assert.equal(themedTotto.asset, approvedAsset);
 });
 
+test("fruit mission and reward use one cache-safe approved Totto artwork", () => {
+  const fruit = getLevel("fruit");
+  const themedTotto = fruit.items.find(item => item.special);
+  const approvedAsset = "assets/characters/totto-fruit-approved.webp";
+
+  assert.equal(fruit.skinAsset, approvedAsset);
+  assert.equal(themedTotto.asset, approvedAsset);
+});
+
+test("fruit level describes its own summer picnic scene and rescue story", () => {
+  const fruit = getLevel("fruit");
+
+  assert.deepEqual(fruit.sceneProps, ["🧺", "🥤", "🌼"]);
+  assert.equal(fruit.containerLabel, "装满水果的夏日藤编果篮");
+  assert.equal(fruit.introTitle, "水果托托掉进夏日果篮啦！");
+  assert.match(fruit.introCopy, /看得见的水果/);
+  assert.match(fruit.introCopy, /三个水果托托/);
+});
+
 test("hotpot uses cohesive local 3D food renders instead of platform emoji", () => {
   const hotpot = buildPool(getLevel("hotpot"), () => 0.5);
   const food = hotpot.filter(item => !item.special);

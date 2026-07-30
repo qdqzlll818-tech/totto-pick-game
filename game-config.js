@@ -80,7 +80,11 @@
       saveKey: "totto-pick-fruit-v1",
       skin: "fruit-totto",
       skinName: "夏日水果帽",
-      skinAsset: "assets/characters/totto-fruit.webp",
+      skinAsset: "assets/characters/totto-fruit-approved.webp",
+      sceneProps: ["🧺", "🥤", "🌼"],
+      containerLabel: "装满水果的夏日藤编果篮",
+      introTitle: "水果托托掉进夏日果篮啦！",
+      introCopy: "点击所有看得见的水果，凑齐三个就能消除。找到三个水果托托，把戴着草帽的它从果篮里救出来！",
       next: null,
       items: [
         item("watermelon", "西瓜", "assets/fruit/watermelon.png", 15),
@@ -96,7 +100,7 @@
         item("pear", "梨", "assets/fruit/pear.png", 9),
         item("kiwi", "猕猴桃", "assets/fruit/kiwi.png", 9),
         item("mango", "芒果", "assets/fruit/mango.png", 9),
-        item("fruit-totto-item", "水果托托", "assets/characters/totto-fruit.webp", 3, true)
+        item("fruit-totto-item", "水果托托", "assets/characters/totto-fruit-approved.webp", 3, true)
       ]
     }
   };

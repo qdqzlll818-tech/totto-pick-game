@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
   <meta name="theme-color" content="#3a2721">
   <title>托托救援队</title>
-  <link rel="stylesheet" href="game.css?v=7">
+  <link rel="stylesheet" href="game.css?v=8">
 </head>
 <body>
   <main class="game-shell">
@@ -34,7 +34,7 @@
     </section>
 
     <section class="scene" id="scene">
-      <div class="table-props" aria-hidden="true"><span>🥢</span><span>🫙</span><span>🌿</span></div>
+      <div class="table-props" id="tableProps" aria-hidden="true"><span>🥢</span><span>🫙</span><span>🌿</span></div>
       <div class="pot" id="pot" aria-label="装满物品的火锅">
         <div class="pot-depth"></div>
         <div class="items" id="items"></div>
@@ -112,11 +112,11 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="cloud-sync.js"></script>
-  <script src="game-config.js?v=7"></script>
-  <script src="game-state.js?v=7"></script>
+  <script src="game-config.js?v=8"></script>
+  <script src="game-state.js?v=8"></script>
   <script src="motion-controls.js"></script>
   <script src="board-motion.js"></script>
-  <script src="item-hit-test.js?v=7"></script>
+  <script src="item-hit-test.js?v=8"></script>
   <script>
     window.fromHome = new URLSearchParams(location.search).get("from") === "home";
     window.playBrandPose = () => {
@@ -126,6 +126,6 @@
       brand.classList.add("arrive");
     };
   </script>
-  <script src="game-app.js?v=7"></script>
+  <script src="game-app.js?v=8"></script>
 </body>
 </html>

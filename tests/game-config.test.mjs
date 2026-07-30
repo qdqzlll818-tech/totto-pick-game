@@ -33,6 +33,15 @@ test("each level contains exactly three matching themed Totto items", () => {
   }
 });
 
+test("garlic mission and reward use the cache-safe approved Totto artwork", () => {
+  const garlic = getLevel("garlic");
+  const themedTotto = garlic.items.find(item => item.special);
+  const approvedAsset = "assets/characters/totto-garlic-approved.webp";
+
+  assert.equal(garlic.skinAsset, approvedAsset);
+  assert.equal(themedTotto.asset, approvedAsset);
+});
+
 test("hotpot uses cohesive local 3D food renders instead of platform emoji", () => {
   const hotpot = buildPool(getLevel("hotpot"), () => 0.5);
   const food = hotpot.filter(item => !item.special);

@@ -33,6 +33,7 @@
   let wantsMotion = true;
   let lastMotionRender = 0;
   let isPaused = false;
+  const hitMasks = new Map();
   const detector = TottoMotionControls.createShakeDetector({ cooldownMs: 1200 });
 
   function visualMarkup(item, compact = false) {
@@ -40,6 +41,76 @@
       return `<span class="emoji" aria-hidden="true">${item.asset.slice(6)}</span>`;
     }
     return `<img src="${item.asset}" alt="" ${compact ? "" : "draggable=\"false\""}>`;
+  }
+
+  function cacheHitMask(image) {
+    if (!image?.complete || !image.naturalWidth || !image.naturalHeight) return;
+    const key = image.currentSrc || image.src;
+    if (hitMasks.has(key)) return;
+
+    try {
+      const canvas = document.createElement("canvas");
+      canvas.width = image.naturalWidth;
+      canvas.height = image.naturalHeight;
+      const context = canvas.getContext("2d", { willReadFrequently: true });
+      context.drawImage(image, 0, 0);
+      const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+      const alpha = new Uint8ClampedArray(canvas.width * canvas.height);
+      for (let source = 3, target = 0; source < pixels.length; source += 4, target += 1) {
+        alpha[target] = pixels[source];
+      }
+      hitMasks.set(key, { width: canvas.width, height: canvas.height, alpha });
+    } catch {
+      hitMasks.set(key, null);
+    }
+  }
+
+  function primeHitMask(button) {
+    const image = button.querySelector("img");
+    if (!image) return;
+    if (image.complete) cacheHitMask(image);
+    else image.addEventListener("load", () => cacheHitMask(image), { once: true });
+  }
+
+  function candidateFromButton(button) {
+    const rect = button.getBoundingClientRect();
+    const image = button.querySelector("img");
+    const key = image ? image.currentSrc || image.src : "";
+    const mask = hitMasks.get(key);
+
+    return {
+      uid: button.dataset.uid,
+      z: Number(button.style.getPropertyValue("--z")) || 0,
+      centerX: rect.left + rect.width / 2,
+      centerY: rect.top + rect.height / 2,
+      width: button.offsetWidth,
+      height: button.offsetHeight,
+      scale: Number(button.style.getPropertyValue("--s")) || 1,
+      rotation: Number.parseFloat(button.style.getPropertyValue("--r")) || 0,
+      alphaAt: (u, v) => image
+        ? TottoItemHitTest.sampleContainedAlpha(mask, u, v, button.offsetWidth, button.offsetHeight)
+        : 1
+    };
+  }
+
+  function handleItemClick(event) {
+    const focusedButton = event.target.closest?.(".item");
+    if (event.detail === 0 && focusedButton) {
+      event.preventDefault();
+      pick(focusedButton.dataset.uid);
+      return;
+    }
+
+    const candidates = [...els.items.querySelectorAll(".item")].map(candidateFromButton);
+    const hit = TottoItemHitTest.pickVisibleCandidate(
+      candidates,
+      { x: event.clientX, y: event.clientY }
+    );
+    if (!hit) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    pick(hit.uid);
   }
 
   function setupLevel() {
@@ -101,8 +172,8 @@
       button.style.setProperty("--r", `${item.rotation}deg`);
       button.style.setProperty("--s", String(item.scale ?? 1));
       button.innerHTML = visualMarkup(item);
-      button.addEventListener("click", () => pick(item.uid));
       els.items.appendChild(button);
+      primeHitMask(button);
     });
 
     renderSlots(els.tray, state.tray, 7);
@@ -443,6 +514,7 @@
   }
 
   els.undo.addEventListener("click", undo);
+  els.items.addEventListener("click", handleItemClick);
   els.shuffle.addEventListener("click", shuffleBoard);
   els.move.addEventListener("click", moveOut);
   els.reserveBtn.addEventListener("click", reserveOne);

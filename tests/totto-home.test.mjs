@@ -23,7 +23,8 @@ test("home renders Totto as a lightweight image without 3D dependencies", async 
 test("published Totto wardrobe images are valid WebP files", async () => {
   for (const path of [
     "../assets/characters/totto-default.webp",
-    "../assets/characters/totto-hotpot-chef.webp"
+    "../assets/characters/totto-hotpot-chef.webp",
+    "../assets/characters/totto-garlic-approved.webp"
   ]) {
     const image = await readFile(new URL(path, import.meta.url));
     assert.equal(image.toString("ascii", 0, 4), "RIFF");
@@ -57,7 +58,7 @@ test("home transition is carried into the game", async () => {
 
 test("game loads the current save-migration script instead of a cached copy", async () => {
   const game = await read("index.html");
-  assert.match(game, /<script src="game-state\.js\?v=5"><\/script>/);
+  assert.match(game, /<script src="game-state\.js\?v=6"><\/script>/);
 });
 
 test("image character keeps touch and keyboard interactions", async () => {

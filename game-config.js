@@ -51,7 +51,7 @@
       saveKey: "totto-pick-garlic-v1",
       skin: "garlic-totto",
       skinName: "蒜香小围裙",
-      skinAsset: "assets/characters/totto-garlic.webp",
+      skinAsset: "assets/characters/totto-garlic-approved.webp",
       next: "fruit",
       items: [
         item("garlic-head", "整头蒜", "assets/garlic/garlic-head.png", 15),
@@ -65,7 +65,7 @@
         item("mortar", "蒜臼", "assets/garlic/mortar.png", 9),
         item("spice-jar", "调味罐", "assets/garlic/spice-jar.png", 9),
         item("wood-spoon", "木勺", "assets/garlic/wood-spoon.png", 9),
-        item("garlic-totto-item", "蒜头托托", "assets/characters/totto-garlic.webp", 3, true)
+        item("garlic-totto-item", "蒜头托托", "assets/characters/totto-garlic-approved.webp", 3, true)
       ]
     },
     fruit: {

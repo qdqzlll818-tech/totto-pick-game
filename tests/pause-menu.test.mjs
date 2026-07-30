@@ -36,8 +36,9 @@ test("paused games freeze time and reject board input until continued", async ()
 test("the current visual and script versions are cache-busted together", async () => {
   const html = await read("index.html");
 
-  assert.match(html, /game\.css\?v=5/);
-  assert.match(html, /game-config\.js\?v=5/);
-  assert.match(html, /game-state\.js\?v=5/);
-  assert.match(html, /game-app\.js\?v=5/);
+  assert.match(html, /game\.css\?v=6/);
+  assert.match(html, /game-config\.js\?v=6/);
+  assert.match(html, /game-state\.js\?v=6/);
+  assert.match(html, /item-hit-test\.js\?v=6/);
+  assert.match(html, /game-app\.js\?v=6/);
 });

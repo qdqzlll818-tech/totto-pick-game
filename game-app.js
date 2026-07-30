@@ -84,7 +84,7 @@
   function render() {
     const active = state.items.filter(item => !item.selected);
     els.items.innerHTML = "";
-    active.sort((a, b) => a.layer - b.layer).forEach(item => {
+    active.sort((a, b) => (a.depth ?? a.layer * 1000) - (b.depth ?? b.layer * 1000)).forEach(item => {
       const button = document.createElement("button");
       button.className = `item${item.special ? " special" : ""}`;
       button.type = "button";
@@ -92,8 +92,9 @@
       button.setAttribute("aria-label", `选择${item.name}`);
       button.style.left = `${item.x}%`;
       button.style.top = `${item.y}%`;
-      button.style.setProperty("--z", String(10 + item.layer));
+      button.style.setProperty("--z", String(10 + Math.round((item.depth ?? item.layer * 1000) / 10)));
       button.style.setProperty("--r", `${item.rotation}deg`);
+      button.style.setProperty("--s", String(item.scale ?? 1));
       button.innerHTML = visualMarkup(item);
       button.addEventListener("click", () => pick(item.uid));
       els.items.appendChild(button);

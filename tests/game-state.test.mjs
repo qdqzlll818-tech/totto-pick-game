@@ -54,3 +54,39 @@ test("finished games are not resumed", () => {
 
   assert.equal(restoreGame(JSON.stringify(state), level), null);
 });
+
+test("old ring-layout saves migrate into a dense pile without losing progress", () => {
+  const level = getLevel("garlic");
+  const oldSave = createGame(level, () => 0.42);
+  delete oldSave.layoutVersion;
+  oldSave.score = 20;
+  oldSave.items[0].selected = true;
+  oldSave.items[1].selected = true;
+  oldSave.tray = oldSave.items.slice(0, 2).map(item => ({
+    uid: item.uid,
+    type: item.type,
+    asset: item.asset,
+    name: item.name,
+    special: item.special
+  }));
+  for (const item of oldSave.items) {
+    item.x = 82;
+    item.y = 50;
+    delete item.depth;
+    delete item.scale;
+  }
+
+  const restored = restoreGame(JSON.stringify(oldSave), level, () => 0.42);
+  const active = restored.items.filter(item => !item.selected);
+  const centerCount = active.filter(item => Math.hypot(
+    (item.x - 50) / 38,
+    (item.y - 50) / 31
+  ) <= 0.24).length;
+
+  assert.equal(restored.layoutVersion, 2);
+  assert.equal(restored.score, 20);
+  assert.equal(restored.tray.length, 2);
+  assert.equal(active.length, 106);
+  assert.ok(centerCount >= 3);
+  assert.ok(active.every(item => item.depth !== undefined && item.scale !== undefined));
+});

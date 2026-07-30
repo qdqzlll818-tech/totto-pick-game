@@ -155,52 +155,13 @@
     }
     .totto-model.is-ready{opacity:1;transform:translateX(-50%) scale(1)}
     .totto-model:active{cursor:grabbing}
-    .totto-model.is-patted{animation:modelPat .48s cubic-bezier(.2,.9,.3,1)}
-    .totto-model.is-departing{animation:modelDepart .72s cubic-bezier(.55,0,.25,1) forwards}
-    @keyframes modelPat{
-      0%,100%{transform:translateX(-50%) scale(1)}
-      42%{transform:translateX(-50%) translateY(-14px) rotate(-2deg) scale(1.04)}
-      72%{transform:translateX(-50%) translateY(-3px) rotate(1deg) scale(.995)}
-    }
-    @keyframes modelDepart{
-      0%{transform:translateX(-50%) scale(1)}
-      35%{transform:translateX(-50%) translateY(-16px) rotate(-3deg) scale(1.04)}
-      100%{transform:translateX(88px) translateY(-42px) rotate(8deg) scale(.62);opacity:0}
-    }
     .totto-fallback{
-      --tilt-x:0deg;--tilt-y:0deg;--move-x:0px;--move-y:0px;
       position:absolute;z-index:6;left:50%;bottom:54px;width:285px;height:335px;
       object-fit:contain;cursor:pointer;user-select:none;-webkit-user-drag:none;
-      transform-origin:50% 72%;transform-style:preserve-3d;will-change:transform,filter;
-      transform:
-        translateX(calc(-50% + var(--move-x))) translateY(var(--move-y))
-        rotateX(var(--tilt-x)) rotateY(var(--tilt-y));
+      transform:translateX(-50%);
       filter:drop-shadow(0 20px 15px rgba(79,48,33,.19));
-      transition:transform .22s cubic-bezier(.2,.75,.25,1),filter .22s ease;
-      animation:portraitIdle 3.8s ease-in-out infinite;
     }
     .totto-fallback:focus-visible{outline:3px solid rgba(223,113,96,.55);outline-offset:5px;border-radius:42%}
-    .totto-fallback.is-patted{animation:portraitPat .48s cubic-bezier(.2,.9,.3,1)}
-    .totto-fallback.is-changing{animation:portraitChange .58s cubic-bezier(.2,.9,.25,1)}
-    .totto-fallback.is-departing{animation:portraitDepart .72s cubic-bezier(.55,0,.25,1) forwards}
-    @keyframes portraitIdle{
-      0%,100%{transform:translateX(calc(-50% + var(--move-x))) translateY(var(--move-y)) rotateX(var(--tilt-x)) rotateY(var(--tilt-y))}
-      50%{transform:translateX(calc(-50% + var(--move-x))) translateY(calc(var(--move-y) - 7px)) rotateX(var(--tilt-x)) rotateY(var(--tilt-y)) scale(1.012)}
-    }
-    @keyframes portraitPat{
-      0%,100%{transform:translateX(calc(-50% + var(--move-x))) translateY(var(--move-y)) rotateX(var(--tilt-x)) rotateY(var(--tilt-y))}
-      42%{transform:translateX(calc(-50% + var(--move-x))) translateY(calc(var(--move-y) - 17px)) rotate(-3deg) scale(1.055)}
-      72%{transform:translateX(calc(-50% + var(--move-x))) translateY(calc(var(--move-y) - 4px)) rotate(2deg) scale(.99)}
-    }
-    @keyframes portraitChange{
-      0%,100%{transform:translateX(-50%) scale(1);filter:drop-shadow(0 20px 15px rgba(79,48,33,.19))}
-      45%{transform:translateX(-50%) translateY(-10px) rotateY(90deg) scale(.9);filter:drop-shadow(0 12px 10px rgba(79,48,33,.13))}
-    }
-    @keyframes portraitDepart{
-      0%{transform:translateX(-50%) scale(1)}
-      35%{transform:translateX(-50%) translateY(-18px) rotate(-4deg) scale(1.05)}
-      100%{transform:translateX(88px) translateY(-45px) rotate(10deg) scale(.62);opacity:0}
-    }
     .speech{
       z-index:8;right:65px;top:210px;max-width:150px;padding:10px 12px;border-radius:17px 17px 4px 17px;
       transition:transform .18s ease,opacity .18s ease;
@@ -257,13 +218,11 @@
         <model-viewer
           class="totto-model"
           id="tottoModel"
-            src="assets/models/totto-walking-web.glb?v=3"
+          src="assets/models/totto-static-web.glb?v=1"
           poster="assets/characters/totto-default.webp"
           alt="可以转动查看的3D托托"
-          aria-label="摸摸或转动3D托托"
+          aria-label="点击或转动3D托托"
           tabindex="0"
-          animation-name="Armature|walking_man|baselayer"
-          autoplay
           camera-controls
           disable-zoom
           interaction-prompt="none"
@@ -369,8 +328,6 @@
     const $$=s=>[...document.querySelectorAll(s)];
     const portrait=$("#tottoFallback");
     const tottoModel=$("#tottoModel");
-    const stage=$("#tottoStage");
-    const reducedMotion=matchMedia("(prefers-reduced-motion: reduce)");
     let modelReady=false;
     let modelFailed=false;
     function read(key,fallback){try{return JSON.parse(localStorage.getItem(key))??fallback}catch(e){return fallback}}
@@ -404,7 +361,6 @@
       if(btn.disabled)return;
       equipped=btn.dataset.skin;localStorage.setItem(EQUIPPED_KEY,equipped);render();
       window.TottoCloud?.syncLocalProgress().catch(()=>{});
-      animatePortrait("is-changing");
     }));
     $$(".nav").forEach(btn=>btn.addEventListener("click",()=>{
       $$(".nav").forEach(n=>n.classList.toggle("active",n===btn));
@@ -468,19 +424,11 @@
       talking=true;const speech=$("#speech");speech.textContent=text;speech.classList.add("talk");
       setTimeout(()=>{speech.classList.remove("talk");talking=false;},360);
     }
-    const portraitClasses=["is-patted","is-changing","is-departing"];
-    const modelClasses=["is-patted","is-departing"];
     function syncCharacterView(){
       const showModel=equipped==="default"&&modelReady&&!modelFailed;
       tottoModel.classList.toggle("hidden",equipped!=="default"||modelFailed);
       tottoModel.classList.toggle("is-ready",showModel);
       portrait.classList.toggle("hidden",showModel);
-      if(showModel&&!reducedMotion.matches){
-        tottoModel.timeScale=.55;
-        tottoModel.play();
-      }else if(typeof tottoModel.pause==="function"){
-        tottoModel.pause();
-      }
     }
     tottoModel.addEventListener("load",()=>{
       modelReady=true;
@@ -491,54 +439,12 @@
       modelFailed=true;
       syncCharacterView();
     });
-    reducedMotion.addEventListener?.("change",()=>{
-      syncCharacterView();
-      if(reducedMotion.matches)tottoModel.pause();
-    });
-    function resetPortraitPose(){
-      portrait.style.setProperty("--tilt-x","0deg");
-      portrait.style.setProperty("--tilt-y","0deg");
-      portrait.style.setProperty("--move-x","0px");
-      portrait.style.setProperty("--move-y","0px");
-    }
-    function animatePortrait(action="is-patted"){
-      portraitClasses.forEach(name=>portrait.classList.remove(name));
-      void portrait.offsetWidth;
-      portrait.classList.add(action);
-      if(action!=="is-departing"){
-        portrait.addEventListener("animationend",()=>portrait.classList.remove(action),{once:true});
-      }
-    }
-    function animateCharacter(action="is-patted"){
-      if(equipped!=="default"||!modelReady||modelFailed){
-        animatePortrait(action);
-        return;
-      }
-      modelClasses.forEach(name=>tottoModel.classList.remove(name));
-      void tottoModel.offsetWidth;
-      tottoModel.classList.add(action);
-      if(action!=="is-departing"){
-        tottoModel.addEventListener("animationend",()=>tottoModel.classList.remove(action),{once:true});
-      }
-    }
     function greetFromPointer(event){
       const rect=event.currentTarget.getBoundingClientRect();
       const type=event.clientY<rect.top+rect.height*.52?"tap-head":"tap-body";
       const lines=interactionLines[type];
       say(lines[Math.floor(Math.random()*lines.length)]);
-      animateCharacter("is-patted");
     }
-    stage.addEventListener("pointermove",event=>{
-      if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;
-      const rect=stage.getBoundingClientRect();
-      const x=Math.max(-.5,Math.min(.5,(event.clientX-rect.left)/rect.width-.5));
-      const y=Math.max(-.5,Math.min(.5,(event.clientY-rect.top)/rect.height-.5));
-      portrait.style.setProperty("--tilt-x",`${-y*5}deg`);
-      portrait.style.setProperty("--tilt-y",`${x*8}deg`);
-      portrait.style.setProperty("--move-x",`${x*9}px`);
-      portrait.style.setProperty("--move-y",`${y*5}px`);
-    });
-    stage.addEventListener("pointerleave",resetPortraitPose);
     portrait.addEventListener("click",greetFromPointer);
     tottoModel.addEventListener("click",greetFromPointer);
     [portrait,tottoModel].forEach(character=>character.addEventListener("keydown",event=>{
@@ -546,18 +452,11 @@
       event.preventDefault();
       const lines=interactionLines["tap-head"];
       say(lines[Math.floor(Math.random()*lines.length)]);
-      animateCharacter("is-patted");
     }));
     $("#startAdventure").addEventListener("click",()=>{
       const button=$("#startAdventure");
       if(button.disabled)return;
       button.disabled=true;button.textContent="托托正在冲向火锅局…";
-      resetPortraitPose();
-      if(modelReady&&!modelFailed&&equipped==="default"){
-        tottoModel.timeScale=1;
-        tottoModel.play();
-      }
-      animateCharacter("is-departing");
       document.body.classList.add("departing");
       setTimeout(()=>{location.href="index.html?from=home&v=5";},720);
     });

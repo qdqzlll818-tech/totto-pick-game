@@ -6,14 +6,28 @@
   "use strict";
 
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+  const POT_RADIUS_X = 38;
+  const POT_RADIUS_Y = 31;
+
+  function keepInsidePot(item) {
+    const dx = item.x - 50;
+    const dy = item.y - 50;
+    const distance = Math.hypot(dx / POT_RADIUS_X, dy / POT_RADIUS_Y);
+    if (distance <= 1) return;
+    const correction = 0.985 / distance;
+    item.x = 50 + dx * correction;
+    item.y = 50 + dy * correction;
+  }
 
   function nudge(items, strength, random) {
     const distance = strength === "strong" ? 5 : strength === "medium" ? 3 : 1.4;
     for (const item of items) {
       if (item.selected) continue;
-      item.x = clamp(item.x + (random() * 2 - 1) * distance, 8, 92);
-      item.y = clamp(item.y + (random() * 2 - 1) * distance, 12, 88);
+      item.x += (random() * 2 - 1) * distance;
+      item.y += (random() * 2 - 1) * distance;
+      keepInsidePot(item);
       item.rotation = clamp(item.rotation + (random() * 2 - 1) * distance * 2.3, -32, 32);
+      item.depth = item.layer * 1000 + Math.round(item.y * 10);
     }
   }
 

@@ -55,6 +55,11 @@ test("home transition is carried into the game", async () => {
   assert.doesNotMatch(game, /three(?:\.module(?:\.min)?|\.min)?\.js/);
 });
 
+test("game loads the current save-migration script instead of a cached copy", async () => {
+  const game = await read("index.html");
+  assert.match(game, /<script src="game-state\.js\?v=2"><\/script>/);
+});
+
 test("image character keeps touch and keyboard interactions", async () => {
   const home = await read("home.html");
   assert.match(home, /prefers-reduced-motion/);

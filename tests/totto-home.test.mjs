@@ -4,13 +4,23 @@ import test from "node:test";
 
 const read = path => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
-test("home renders the animated Totto GLB with an image fallback", async () => {
+async function readGlbJson(path) {
+  const glb = await readFile(path);
+  assert.equal(glb.toString("ascii", 0, 4), "glTF");
+  assert.equal(glb.readUInt32LE(4), 2);
+  const jsonLength = glb.readUInt32LE(12);
+  assert.equal(glb.readUInt32LE(16), 0x4e4f534a);
+  return JSON.parse(glb.toString("utf8", 20, 20 + jsonLength).trim());
+}
+
+test("home renders the static Totto GLB with an image fallback", async () => {
   const home = await read("home.html");
   assert.match(home, /id="tottoStage"/);
   assert.match(home, /@google\/model-viewer@4\.2\.0/);
   assert.match(home, /id="tottoModel"/);
-  assert.match(home, /src="assets\/models\/totto-walking-web\.glb\?v=3"/);
-  assert.match(home, /animation-name="Armature\|walking_man\|baselayer"/);
+  assert.match(home, /src="assets\/models\/totto-static-web\.glb\?v=1"/);
+  assert.doesNotMatch(home, /animation-name=/);
+  assert.doesNotMatch(home, /\sautoplay(?:\s|>)/);
   assert.match(home, /camera-controls/);
   assert.match(home, /disable-zoom/);
   assert.match(home, /id="tottoFallback"/);
@@ -23,6 +33,11 @@ test("home renders the animated Totto GLB with an image fallback", async () => {
   assert.doesNotMatch(home, /totto-3d\.js/);
   assert.doesNotMatch(home, /three(?:\.module(?:\.min)?|\.min)?\.js/);
   assert.doesNotMatch(home, /Totto3D\.mount/);
+});
+
+test("Totto web model contains no animation tracks", async () => {
+  const glb = await readGlbJson(new URL("../assets/models/totto-static-web.glb", import.meta.url));
+  assert.equal(glb.animations?.length ?? 0, 0);
 });
 
 test("legacy 3D module remains isolated for a future GLB replacement", async () => {
@@ -48,11 +63,12 @@ test("home transition is carried into the game", async () => {
   assert.doesNotMatch(game, /three(?:\.module(?:\.min)?|\.min)?\.js/);
 });
 
-test("motion safeguards pause the animated model", async () => {
+test("static model keeps fallback safeguards without playback controls", async () => {
   const home = await read("home.html");
   assert.match(home, /prefers-reduced-motion/);
   assert.match(home, /tottoModel/);
   assert.match(home, /tottoFallback/);
-  assert.match(home, /tottoModel\.pause\(\)/);
+  assert.doesNotMatch(home, /tottoModel\.(?:play|pause)\(\)/);
+  assert.doesNotMatch(home, /timeScale/);
   assert.match(home, /aria-label="可以互动的托托"/);
 });

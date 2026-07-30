@@ -17,19 +17,36 @@
   }
 
   function placeItems(items, level, random) {
+    const layerCount = Math.ceil(items.length / level.itemsPerLayer);
+
     return items.map((item, index) => {
       const layer = Math.floor(index / level.itemsPerLayer);
       const slot = index % level.itemsPerLayer;
-      const progress = (slot + 1) / level.itemsPerLayer;
-      const angle = slot * 2.399963 + layer * 0.36 + random() * 0.18;
-      const radius = 13 + Math.sqrt(progress) * 31;
+      const itemsInLayer = Math.min(
+        level.itemsPerLayer,
+        items.length - layer * level.itemsPerLayer
+      );
+      const layerProgress = layerCount > 1 ? layer / (layerCount - 1) : 0;
+      const spread = 0.98 - layerProgress * 0.12;
+      const radius = slot === 0
+        ? random() * 0.05
+        : Math.sqrt(slot / Math.max(1, itemsInLayer - 1)) * spread;
+      const angle = slot * 2.399963 + layer * 0.73 + random() * 0.22;
+      const x = 50 + Math.cos(angle) * radius * 38;
+      const y = 50 + Math.sin(angle) * radius * 31;
+      const scale = 0.88
+        + layerProgress * 0.12
+        + ((slot % 4) - 1.5) * 0.022
+        + (random() - 0.5) * 0.025;
 
       return {
         ...item,
-        x: Math.max(10, Math.min(90, 50 + Math.cos(angle) * radius)),
-        y: Math.max(14, Math.min(86, 50 + Math.sin(angle) * radius * 0.82)),
+        x,
+        y,
         layer,
-        rotation: random() * 48 - 24
+        depth: layer * 1000 + Math.round(y * 10) + slot,
+        rotation: random() * 56 - 28 + ((slot % 3) - 1) * 5,
+        scale: Math.max(0.82, Math.min(1.08, scale))
       };
     });
   }

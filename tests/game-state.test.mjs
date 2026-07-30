@@ -20,6 +20,23 @@ test("shared game state builds the selected level with the configured item count
   }
 });
 
+test("initial boards form a dense layered pile without a hollow center", () => {
+  for (const id of ["hotpot", "garlic", "fruit"]) {
+    const level = getLevel(id);
+    const state = createGame(level, () => 0.42);
+    const distances = state.items.map(item => Math.hypot(
+      (item.x - 50) / 38,
+      (item.y - 50) / 31
+    ));
+
+    assert.ok(distances.filter(distance => distance <= 0.24).length >= 3, `${id} fills its center`);
+    assert.ok(state.items.every((item, index) => index === 0 || item.depth !== undefined));
+    assert.ok(new Set(state.items.map(item => item.depth)).size > level.itemsPerLayer);
+    assert.ok(new Set(state.items.map(item => item.scale)).size > 2);
+    assert.ok(distances.every(distance => distance <= 1), `${id} stays inside the pot`);
+  }
+});
+
 test("saved games restore only into their original level", () => {
   const hotpot = getLevel("hotpot");
   const state = createGame(hotpot, () => 0.42);

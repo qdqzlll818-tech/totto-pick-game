@@ -6,8 +6,8 @@
   "use strict";
 
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
-  const POT_RADIUS_X = 38;
-  const POT_RADIUS_Y = 31;
+  const POT_RADIUS_X = 46;
+  const POT_RADIUS_Y = 38;
 
   function keepInsidePot(item) {
     const dx = item.x - 50;

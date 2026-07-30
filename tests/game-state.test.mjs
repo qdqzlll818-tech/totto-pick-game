@@ -25,8 +25,8 @@ test("initial boards form a dense layered pile without a hollow center", () => {
     const level = getLevel(id);
     const state = createGame(level, () => 0.42);
     const distances = state.items.map(item => Math.hypot(
-      (item.x - 50) / 38,
-      (item.y - 50) / 31
+      (item.x - 50) / 46,
+      (item.y - 50) / 38
     ));
 
     assert.ok(distances.filter(distance => distance <= 0.24).length >= 3, `${id} fills its center`);
@@ -35,7 +35,7 @@ test("initial boards form a dense layered pile without a hollow center", () => {
     assert.ok(new Set(state.items.map(item => item.scale)).size > 2);
     assert.ok(distances.every(distance => distance <= 1), `${id} stays inside the pot`);
     assert.ok(distances.filter(distance => distance >= 0.78).length >= 9, `${id} fills the outer bowl`);
-    assert.equal(state.layoutVersion, 3);
+    assert.equal(state.layoutVersion, 4);
   }
 });
 
@@ -53,6 +53,15 @@ test("finished games are not resumed", () => {
   const level = getLevel("hotpot");
   const state = createGame(level, () => 0.42);
   state.status = "won";
+
+  assert.equal(restoreGame(JSON.stringify(state), level), null);
+});
+
+test("saves containing retired item types are discarded instead of restoring old emoji assets", () => {
+  const level = getLevel("hotpot");
+  const state = createGame(level, () => 0.42);
+  state.items[0].type = "retired-fish-ball";
+  state.items[0].asset = "emoji:⚪";
 
   assert.equal(restoreGame(JSON.stringify(state), level), null);
 });
@@ -81,11 +90,11 @@ test("old ring-layout saves migrate into a dense pile without losing progress", 
   const restored = restoreGame(JSON.stringify(oldSave), level, () => 0.42);
   const active = restored.items.filter(item => !item.selected);
   const centerCount = active.filter(item => Math.hypot(
-    (item.x - 50) / 38,
-    (item.y - 50) / 31
+    (item.x - 50) / 46,
+    (item.y - 50) / 38
   ) <= 0.24).length;
 
-  assert.equal(restored.layoutVersion, 3);
+  assert.equal(restored.layoutVersion, 4);
   assert.equal(restored.score, 20);
   assert.equal(restored.tray.length, 2);
   assert.equal(active.length, 106);

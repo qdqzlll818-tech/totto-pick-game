@@ -41,12 +41,12 @@ button{cursor:pointer}
 @keyframes potShake{25%{transform:translate(-51.2%,-50%) rotate(-1deg)}75%{transform:translate(-48.8%,-50%) rotate(1deg)}}
 .pot-depth{position:absolute;inset:12% 10%;border-radius:50%;background:radial-gradient(ellipse at 42% 28%,rgba(255,255,255,.13),transparent 34%);box-shadow:inset 0 18px 26px rgba(255,255,255,.08),inset 0 -32px 38px rgba(0,0,0,.34)}
 .pot-rim{position:absolute;inset:3.5%;border:6px solid rgba(255,255,255,.12);border-radius:50%;pointer-events:none;box-shadow:inset 0 5px 6px rgba(255,255,255,.14),0 2px 0 rgba(0,0,0,.3)}
-.items{position:absolute;inset:8% 9%;z-index:3}
-.item{position:absolute;width:88px;height:88px;transform:translate(-50%,-50%) rotate(var(--r)) scale(var(--s,1));z-index:var(--z);border:0;padding:0;background:none;filter:drop-shadow(0 2px 1px rgba(255,255,255,.22)) drop-shadow(0 13px 7px rgba(18,13,11,.48));transition:left .25s ease,top .25s ease,transform .18s ease,opacity .18s ease}
+.items{position:absolute;inset:6% 7%;z-index:3}
+.item{position:absolute;width:100px;height:100px;transform:translate(-50%,-50%) rotate(var(--r)) scale(var(--s,1));z-index:var(--z);border:0;padding:0;background:none;filter:drop-shadow(0 2px 1px rgba(255,255,255,.22)) drop-shadow(0 13px 7px rgba(18,13,11,.48));transition:left .25s ease,top .25s ease,transform .18s ease,opacity .18s ease}
 .item:active{transform:translate(-50%,-50%) rotate(var(--r)) scale(calc(var(--s,1) * .86))}
 .item .emoji{display:grid;place-items:center;width:100%;height:100%;font-size:61px;line-height:1;text-shadow:0 2px 0 rgba(255,255,255,.3),0 7px 5px rgba(35,24,19,.3);transform:rotate(calc(var(--r) * -1)) scaleY(1.04)}
 .item img{width:100%;height:100%;object-fit:contain;filter:saturate(1.08) contrast(1.03)}
-.item.special{width:96px;height:96px;filter:drop-shadow(0 2px 1px rgba(255,255,255,.22)) drop-shadow(0 14px 8px rgba(31,20,15,.48))}
+.item.special{width:108px;height:108px;filter:drop-shadow(0 2px 1px rgba(255,255,255,.22)) drop-shadow(0 14px 8px rgba(31,20,15,.48))}
 .shake-wave{position:absolute;z-index:8;left:50%;top:52%;width:20%;aspect-ratio:1;border:3px solid rgba(255,255,255,.7);border-radius:50%;transform:translate(-50%,-50%) scale(.3);opacity:0;pointer-events:none}
 .shake-wave.show{animation:wave .55s ease-out}
 @keyframes wave{to{opacity:0;transform:translate(-50%,-50%) scale(5)}20%{opacity:.8}}
@@ -80,7 +80,7 @@ button{cursor:pointer}
 .game-paused .scene,.game-paused .tools,.game-paused .hud,.game-paused .mission-card{filter:saturate(.72)}
 .pause-button:focus-visible,.sound-pill:focus-visible,.item:focus-visible,.tools button:focus-visible,.dialog button:focus-visible,.dialog a:focus-visible{outline:3px solid #fff;outline-offset:3px}
 @media(max-width:430px){
-  .game-shell{padding-inline:8px}.scene{height:54vh;min-height:390px}.pot{width:102%}.items{inset:8% 8%}.item{width:75px;height:75px}.item .emoji{font-size:55px}.item.special{width:82px;height:82px}
+  .game-shell{padding-inline:8px}.scene{height:54vh;min-height:390px}.pot{width:102%}.items{inset:6%}.item{width:84px;height:84px}.item .emoji{font-size:61px}.item.special{width:92px;height:92px}
   .tray{min-height:48px}.slot .emoji{font-size:23px}.topbar{margin-bottom:6px;gap:7px}.mission-card{margin:6px 0}.level-identity>img{display:none}.sound-pill{padding-inline:8px}
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}

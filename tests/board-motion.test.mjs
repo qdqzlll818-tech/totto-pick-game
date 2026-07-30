@@ -62,7 +62,7 @@ test("shake motion keeps every item inside the pot ellipse", () => {
   applyBoardMotion(items, "strong", () => 1);
 
   for (const item of items) {
-    const ellipseDistance = ((item.x - 50) / 38) ** 2 + ((item.y - 50) / 31) ** 2;
+    const ellipseDistance = ((item.x - 50) / 46) ** 2 + ((item.y - 50) / 38) ** 2;
     assert.ok(ellipseDistance <= 1.000001, `${item.uid} escaped the pot`);
   }
 });

@@ -8,7 +8,7 @@
 })(typeof globalThis !== "undefined" ? globalThis : this, function createGameState(config) {
   "use strict";
 
-  const LAYOUT_VERSION = 3;
+  const LAYOUT_VERSION = 4;
 
   function shuffle(items, random) {
     for (let index = items.length - 1; index > 0; index -= 1) {
@@ -34,8 +34,8 @@
         ? random() * 0.05
         : Math.sqrt(slot / Math.max(1, itemsInLayer - 1)) * spread;
       const angle = slot * 2.399963 + layer * 0.73 + random() * 0.22;
-      const x = 50 + Math.cos(angle) * radius * 38;
-      const y = 50 + Math.sin(angle) * radius * 31;
+      const x = 50 + Math.cos(angle) * radius * 46;
+      const y = 50 + Math.sin(angle) * radius * 38;
       const scale = 0.97
         + layerProgress * 0.13
         + ((slot % 4) - 1.5) * 0.025
@@ -86,6 +86,11 @@
         Array.isArray(saved.tray) &&
         Array.isArray(saved.reserve)
       ) {
+        const currentAssets = new Map(resolved.items.map(item => [item.id, item.asset]));
+        const usesCurrentSet = saved.items.every(item =>
+          currentAssets.has(item.type) && currentAssets.get(item.type) === item.asset
+        );
+        if (!usesCurrentSet) return null;
         if (saved.layoutVersion !== LAYOUT_VERSION) {
           const active = placeItems(saved.items.filter(item => !item.selected), resolved, random);
           const selected = placeItems(saved.items.filter(item => item.selected), resolved, random);

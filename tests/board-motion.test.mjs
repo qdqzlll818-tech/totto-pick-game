@@ -51,3 +51,18 @@ test("strong shake promotes at most four items and cannot expose the whole botto
   assert.ok(result.promoted <= 4);
   assert.ok(promotedFromBottom < bottomCount);
 });
+
+test("shake motion keeps every item inside the pot ellipse", () => {
+  const items = [
+    { uid: "right-edge", selected: false, layer: 0, x: 88, y: 50, rotation: 0 },
+    { uid: "bottom-edge", selected: false, layer: 1, x: 50, y: 81, rotation: 0 },
+    { uid: "corner", selected: false, layer: 2, x: 82, y: 76, rotation: 0 }
+  ];
+
+  applyBoardMotion(items, "strong", () => 1);
+
+  for (const item of items) {
+    const ellipseDistance = ((item.x - 50) / 38) ** 2 + ((item.y - 50) / 31) ** 2;
+    assert.ok(ellipseDistance <= 1.000001, `${item.uid} escaped the pot`);
+  }
+});

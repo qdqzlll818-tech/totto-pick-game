@@ -9,7 +9,7 @@ test("home renders the animated Totto GLB with an image fallback", async () => {
   assert.match(home, /id="tottoStage"/);
   assert.match(home, /@google\/model-viewer@4\.2\.0/);
   assert.match(home, /id="tottoModel"/);
-  assert.match(home, /src="assets\/models\/totto-walking-web\.glb\?v=2"/);
+  assert.match(home, /src="assets\/models\/totto-walking-web\.glb\?v=3"/);
   assert.match(home, /animation-name="Armature\|walking_man\|baselayer"/);
   assert.match(home, /camera-controls/);
   assert.match(home, /disable-zoom/);

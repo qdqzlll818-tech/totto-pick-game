@@ -42,6 +42,23 @@ test("hotpot uses cohesive local 3D food renders instead of platform emoji", () 
   assert.equal(new Set(food.map(item => item.type)).size, 7);
 });
 
+test("every level uses cohesive local 3D renders instead of platform emoji", () => {
+  const assetFolders = {
+    hotpot: "food",
+    garlic: "garlic",
+    fruit: "fruit"
+  };
+
+  for (const [id, folder] of Object.entries(assetFolders)) {
+    const regularItems = buildPool(getLevel(id), () => 0.5).filter(item => !item.special);
+    const localAsset = new RegExp(`^assets/${folder}/[a-z-]+\\.png$`);
+
+    assert.ok(regularItems.length > 0, id);
+    assert.ok(regularItems.every(item => localAsset.test(item.asset)), id);
+    assert.ok(regularItems.every(item => !item.asset.startsWith("emoji:")), id);
+  }
+});
+
 test("levels unlock only after the immediately preceding level is complete", () => {
   assert.equal(isLevelUnlocked("hotpot", []), true);
   assert.equal(isLevelUnlocked("garlic", []), false);

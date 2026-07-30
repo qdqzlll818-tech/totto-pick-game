@@ -29,16 +29,13 @@
       skinAsset: "assets/characters/totto-hotpot-chef.webp",
       next: "garlic",
       items: [
-        item("mushroom", "香菇", "emoji:🍄", 9),
-        item("corn", "玉米", "emoji:🌽", 9),
-        item("shrimp", "鲜虾", "emoji:🍤", 9),
-        item("tofu", "豆腐", "emoji:◻️", 9),
-        item("beef", "肥牛卷", "emoji:🥩", 9),
-        item("greens", "青菜", "emoji:🥬", 9),
-        item("dumpling", "饺子", "emoji:🥟", 9),
-        item("fish-ball", "鱼丸", "emoji:⚪", 9),
-        item("lotus-root", "藕片", "emoji:🟤", 9),
-        item("crab-stick", "蟹棒", "emoji:🦀", 9),
+        item("mushroom", "香菇", "assets/food/mushroom.png", 15),
+        item("corn", "玉米", "assets/food/corn.png", 15),
+        item("shrimp", "鲜虾", "assets/food/shrimp.png", 12),
+        item("tofu", "豆腐", "assets/food/tofu.png", 12),
+        item("beef", "肥牛卷", "assets/food/beef.png", 12),
+        item("greens", "青菜", "assets/food/greens.png", 12),
+        item("dumpling", "饺子", "assets/food/dumpling.png", 12),
         item("hotpot-totto", "火锅托托", "assets/characters/totto-hotpot-chef.webp", 3, true)
       ]
     },

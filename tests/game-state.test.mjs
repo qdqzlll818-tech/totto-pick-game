@@ -34,6 +34,8 @@ test("initial boards form a dense layered pile without a hollow center", () => {
     assert.ok(new Set(state.items.map(item => item.depth)).size > level.itemsPerLayer);
     assert.ok(new Set(state.items.map(item => item.scale)).size > 2);
     assert.ok(distances.every(distance => distance <= 1), `${id} stays inside the pot`);
+    assert.ok(distances.filter(distance => distance >= 0.78).length >= 9, `${id} fills the outer bowl`);
+    assert.equal(state.layoutVersion, 3);
   }
 });
 
@@ -83,7 +85,7 @@ test("old ring-layout saves migrate into a dense pile without losing progress", 
     (item.y - 50) / 31
   ) <= 0.24).length;
 
-  assert.equal(restored.layoutVersion, 2);
+  assert.equal(restored.layoutVersion, 3);
   assert.equal(restored.score, 20);
   assert.equal(restored.tray.length, 2);
   assert.equal(active.length, 106);

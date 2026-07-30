@@ -3,17 +3,20 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-  <meta name="theme-color" content="#f3b86d">
+  <meta name="theme-color" content="#3a2721">
   <title>托托救援队</title>
-  <link rel="stylesheet" href="game.css">
+  <link rel="stylesheet" href="game.css?v=3">
 </head>
 <body>
   <main class="game-shell">
     <header class="topbar">
-      <a class="home-link" href="home.html" aria-label="返回托托的小屋"><img id="brandTotto" src="assets/characters/totto-default.webp" alt=""></a>
-      <div class="level-heading">
-        <span id="levelEyebrow">第一关</span>
-        <h1 id="levelTitle">火锅局</h1>
+      <button class="pause-button" id="pauseBtn" type="button" aria-label="暂停游戏"><span aria-hidden="true"></span></button>
+      <div class="level-identity">
+        <img id="brandTotto" src="assets/characters/totto-default.webp" alt="">
+        <div class="level-heading">
+          <span id="levelEyebrow">第一关</span>
+          <h1 id="levelTitle">火锅局</h1>
+        </div>
       </div>
       <button class="sound-pill" id="motionStatus" type="button">摇一摇 · 未开启</button>
     </header>
@@ -85,12 +88,32 @@
     </section>
   </div>
 
+  <div class="overlay" id="pauseMenu">
+    <section class="dialog pause-dialog" role="dialog" aria-modal="true" aria-labelledby="pauseTitle">
+      <div class="pause-main" id="pauseMain">
+        <div class="pause-mark" aria-hidden="true"><i></i><i></i></div>
+        <h2 id="pauseTitle">游戏暂停</h2>
+        <p>托托会在这里等你，当前进度已经自动保存。</p>
+        <button class="primary" id="continueBtn" type="button">继续游戏</button>
+        <button class="menu-button restart-button" id="restartBtn" type="button">重新开始本关</button>
+        <a class="menu-button" id="pauseHomeLink" href="home.html">返回托托小屋</a>
+      </div>
+      <div class="restart-confirm" id="restartConfirm" hidden>
+        <div class="confirm-icon" aria-hidden="true">↻</div>
+        <h2>确定重新开始？</h2>
+        <p>本关的得分和已收集物品会清空，已解锁的关卡和皮肤不会受影响。</p>
+        <button class="danger-button" id="confirmRestartBtn" type="button">确定重开</button>
+        <button class="menu-button" id="cancelRestartBtn" type="button">先不重开</button>
+      </div>
+    </section>
+  </div>
+
   <div class="toast" id="toast" role="status"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="cloud-sync.js"></script>
-  <script src="game-config.js"></script>
-  <script src="game-state.js?v=2"></script>
+  <script src="game-config.js?v=3"></script>
+  <script src="game-state.js?v=3"></script>
   <script src="motion-controls.js"></script>
   <script src="board-motion.js"></script>
   <script>
@@ -102,6 +125,6 @@
       brand.classList.add("arrive");
     };
   </script>
-  <script src="game-app.js"></script>
+  <script src="game-app.js?v=3"></script>
 </body>
 </html>

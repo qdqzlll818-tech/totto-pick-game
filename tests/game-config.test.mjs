@@ -33,6 +33,15 @@ test("each level contains exactly three matching themed Totto items", () => {
   }
 });
 
+test("hotpot uses cohesive local 3D food renders instead of platform emoji", () => {
+  const hotpot = buildPool(getLevel("hotpot"), () => 0.5);
+  const food = hotpot.filter(item => !item.special);
+
+  assert.ok(food.length > 0);
+  assert.ok(food.every(item => /^assets\/food\/[a-z-]+\.png$/.test(item.asset)));
+  assert.equal(new Set(food.map(item => item.type)).size, 7);
+});
+
 test("levels unlock only after the immediately preceding level is complete", () => {
   assert.equal(isLevelUnlocked("hotpot", []), true);
   assert.equal(isLevelUnlocked("garlic", []), false);

@@ -17,7 +17,11 @@
     shuffleLeft: $("#shuffleLeft"), moveLeft: $("#moveLeft"), reserveLeft: $("#reserveLeft"),
     undo: $("#undoBtn"), shuffle: $("#shuffleBtn"), move: $("#moveBtn"), reserveBtn: $("#reserveBtn"),
     intro: $("#intro"), result: $("#result"), toast: $("#toast"), pot: $("#pot"),
-    shakeWave: $("#shakeWave"), motionStatus: $("#motionStatus"), motionChoice: $("#motionChoice")
+    shakeWave: $("#shakeWave"), motionStatus: $("#motionStatus"), motionChoice: $("#motionChoice"),
+    pauseBtn: $("#pauseBtn"), pauseMenu: $("#pauseMenu"), pauseMain: $("#pauseMain"),
+    restartConfirm: $("#restartConfirm"), continueBtn: $("#continueBtn"),
+    restartBtn: $("#restartBtn"), confirmRestartBtn: $("#confirmRestartBtn"),
+    cancelRestartBtn: $("#cancelRestartBtn")
   };
 
   let state;
@@ -28,6 +32,7 @@
   let motionEnabled = false;
   let wantsMotion = true;
   let lastMotionRender = 0;
+  let isPaused = false;
   const detector = TottoMotionControls.createShakeDetector({ cooldownMs: 1200 });
 
   function visualMarkup(item, compact = false) {
@@ -109,7 +114,7 @@
     els.shuffleLeft.textContent = state.shuffleLeft;
     els.moveLeft.textContent = state.moveLeft;
     els.reserveLeft.textContent = state.reserveLeft;
-    const playing = state.status === "playing";
+    const playing = state.status === "playing" && !isPaused;
     els.undo.disabled = !previousState || !playing;
     els.shuffle.disabled = state.shuffleLeft <= 0 || active.length < 2 || !playing;
     els.move.disabled = state.moveLeft <= 0 || state.tray.length === 0 || !playing;
@@ -134,7 +139,7 @@
   }
 
   async function pick(uid) {
-    if (resolveLock || state.status !== "playing") return;
+    if (isPaused || resolveLock || state.status !== "playing") return;
     const item = state.items.find(entry => entry.uid === uid && !entry.selected);
     if (!item) return;
     previousState = clone(state);
@@ -182,6 +187,8 @@
   function finish(won) {
     state.elapsed = elapsedNow();
     state.status = won ? "won" : "lost";
+    isPaused = false;
+    document.body.classList.remove("game-paused");
     stopTimer();
     localStorage.removeItem(level.saveKey);
     const reward = won ? completeLevel() : null;
@@ -219,7 +226,7 @@
   }
 
   function undo() {
-    if (!previousState) return;
+    if (isPaused || !previousState) return;
     state = previousState;
     previousState = null;
     state.startedAt = Date.now();
@@ -228,7 +235,7 @@
   }
 
   function shuffleBoard() {
-    if (state.shuffleLeft <= 0) return;
+    if (isPaused || state.shuffleLeft <= 0) return;
     previousState = clone(state);
     state.shuffleLeft -= 1;
     const active = state.items.filter(item => !item.selected);
@@ -244,7 +251,7 @@
   }
 
   function moveOut() {
-    if (state.moveLeft <= 0 || !state.tray.length) return;
+    if (isPaused || state.moveLeft <= 0 || !state.tray.length) return;
     previousState = clone(state);
     const item = state.tray.pop();
     const source = state.items.find(entry => entry.uid === item.uid);
@@ -255,7 +262,7 @@
   }
 
   function reserveOne() {
-    if (state.reserveLeft <= 0 || !state.tray.length || state.reserve.length >= 2) return;
+    if (isPaused || state.reserveLeft <= 0 || !state.tray.length || state.reserve.length >= 2) return;
     previousState = clone(state);
     state.reserve.push(state.tray.pop());
     state.reserveLeft -= 1;
@@ -264,7 +271,7 @@
   }
 
   function releaseReserve() {
-    if (!state.reserve.length || state.tray.length >= 7) return;
+    if (isPaused || !state.reserve.length || state.tray.length >= 7) return;
     previousState = clone(state);
     state.tray.push(state.reserve.pop());
     render();
@@ -272,7 +279,7 @@
   }
 
   function elapsedNow() {
-    return state.elapsed + (state.status === "playing" ? Date.now() - state.startedAt : 0);
+    return state.elapsed + (state.status === "playing" && !isPaused ? Date.now() - state.startedAt : 0);
   }
 
   function startTimer() {
@@ -310,11 +317,49 @@
 
   function restart() {
     stopTimer();
+    isPaused = false;
+    document.body.classList.remove("game-paused");
     state = TottoGameState.createGame(level);
     previousState = null;
     els.result.classList.remove("show");
+    els.pauseMenu.classList.remove("show");
+    closeRestartConfirmation();
     render();
     startTimer();
+  }
+
+  function pauseGame() {
+    if (!state || state.status !== "playing" || isPaused || els.intro.classList.contains("show")) return;
+    state.elapsed = elapsedNow();
+    state.startedAt = Date.now();
+    isPaused = true;
+    stopTimer();
+    updateTimer();
+    save();
+    closeRestartConfirmation();
+    document.body.classList.add("game-paused");
+    els.pauseMenu.classList.add("show");
+    requestAnimationFrame(() => els.continueBtn.focus());
+  }
+
+  function continueGame() {
+    if (!isPaused) return;
+    els.pauseMenu.classList.remove("show");
+    document.body.classList.remove("game-paused");
+    isPaused = false;
+    startTimer();
+    showToast("继续救援！");
+  }
+
+  function openRestartConfirmation() {
+    els.pauseMain.hidden = true;
+    els.restartConfirm.hidden = false;
+    els.confirmRestartBtn.focus();
+  }
+
+  function closeRestartConfirmation() {
+    els.pauseMain.hidden = false;
+    els.restartConfirm.hidden = true;
   }
 
   function animatePot() {
@@ -327,7 +372,7 @@
   }
 
   function applyMotion(strength) {
-    if (!state || state.status !== "playing" || strength === "none") return;
+    if (!state || isPaused || state.status !== "playing" || strength === "none") return;
     const result = TottoBoardMotion.applyBoardMotion(state.items, strength);
     animatePot();
     const now = performance.now();
@@ -376,6 +421,7 @@
   async function startGame(useMotion) {
     if (useMotion) await enableMotion();
     els.intro.classList.remove("show");
+    isPaused = false;
     startTimer();
   }
 
@@ -402,6 +448,14 @@
   els.reserveBtn.addEventListener("click", reserveOne);
   els.reserve.addEventListener("click", releaseReserve);
   $("#againBtn").addEventListener("click", restart);
+  els.pauseBtn.addEventListener("click", pauseGame);
+  els.continueBtn.addEventListener("click", continueGame);
+  els.restartBtn.addEventListener("click", openRestartConfirmation);
+  els.cancelRestartBtn.addEventListener("click", () => {
+    closeRestartConfirmation();
+    els.restartBtn.focus();
+  });
+  els.confirmRestartBtn.addEventListener("click", restart);
   $("#startBtn").addEventListener("click", () => startGame(wantsMotion));
   $("#skipIntro").addEventListener("click", () => startGame(false));
   els.motionChoice.addEventListener("click", () => {
@@ -409,6 +463,7 @@
     els.motionChoice.classList.toggle("selected", wantsMotion);
   });
   els.motionStatus.addEventListener("click", async () => {
+    if (isPaused) return;
     if (motionEnabled) {
       applyMotion("medium");
     } else {
@@ -418,6 +473,16 @@
   });
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) save();
+  });
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && isPaused) {
+      if (!els.restartConfirm.hidden) {
+        closeRestartConfirmation();
+        els.restartBtn.focus();
+      } else {
+        continueGame();
+      }
+    }
   });
   window.addEventListener("beforeunload", save);
 })();

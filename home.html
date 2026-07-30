@@ -215,9 +215,9 @@
       <section class="panel teaser">
         <div class="panel-head"><h2>今日状态</h2><span id="clearText">还没有救出托托</span></div>
         <div class="map">
-          <a class="level" href="index.html?from=home&amp;v=4">
+          <a class="level" href="index.html?from=home&amp;level=hotpot&amp;v=6">
             <span class="level-icon">🍲</span>
-            <span class="level-text"><b>继续去火锅局</b><small>三个一样就捞走</small></span>
+            <span class="level-text"><b>继续去火锅局</b><small>93 个物品 · 三个一样就捞走</small></span>
             <span class="level-reward">通关<br>+100 🪙</span>
           </a>
         </div>
@@ -234,8 +234,8 @@
           <button class="skin" data-skin="hotpot-chef">
             <img src="assets/characters/totto-hotpot-chef.webp?v=2" alt="火锅小厨神"><small>火锅小厨神</small>
           </button>
-          <button class="skin locked" disabled><span class="locked-art">🧄</span><small>蒜香小围裙</small></button>
-          <button class="skin locked" disabled><span class="locked-art">🍉</span><small>夏日水果帽</small></button>
+          <button class="skin locked" data-skin="garlic-totto" disabled><img src="assets/characters/totto-garlic.webp" alt="蒜香小围裙"><small>蒜香小围裙</small></button>
+          <button class="skin locked" data-skin="fruit-totto" disabled><img src="assets/characters/totto-fruit.webp" alt="夏日水果帽"><small>夏日水果帽</small></button>
         </div>
       </section>
     </section>
@@ -244,21 +244,21 @@
       <section class="panel">
         <div class="panel-head"><h2>托托救援地图</h2><span>每关解锁一套皮肤</span></div>
         <div class="map">
-          <a class="level" href="index.html">
+          <a class="level" href="index.html?level=hotpot">
             <span class="level-icon">🍲</span>
             <span class="level-text"><b>第1关 · 火锅局</b><small>解锁火锅小厨神</small></span>
             <span class="level-reward" id="hotpotStatus">可挑战</span>
           </a>
-          <div class="level locked" id="garlicLevel">
+          <a class="level locked" id="garlicLevel" href="index.html?level=garlic">
             <span class="level-icon">🧄</span>
-            <span class="level-text"><b>第2关 · 大蒜局</b><small>即将开放</small></span>
-            <span class="level-reward">🔒</span>
-          </div>
-          <div class="level locked">
+            <span class="level-text"><b>第2关 · 大蒜局</b><small>108 个物品 · 解锁蒜香小围裙</small></span>
+            <span class="level-reward" id="garlicStatus">🔒</span>
+          </a>
+          <a class="level locked" id="fruitLevel" href="index.html?level=fruit">
             <span class="level-icon">🍉</span>
-            <span class="level-text"><b>第3关 · 水果局</b><small>即将开放</small></span>
-            <span class="level-reward">🔒</span>
-          </div>
+            <span class="level-text"><b>第3关 · 水果局</b><small>126 个物品 · 解锁夏日水果帽</small></span>
+            <span class="level-reward" id="fruitStatus">🔒</span>
+          </a>
         </div>
       </section>
     </section>
@@ -285,6 +285,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="cloud-sync.js"></script>
+  <script src="game-config.js"></script>
   <script>
   (()=> {
     "use strict";
@@ -293,7 +294,9 @@
     const PROGRESS_KEY="totto-pick-progress-v1";
     const ASSETS={
       default:"assets/characters/totto-default.webp?v=2",
-      "hotpot-chef":"assets/characters/totto-hotpot-chef.webp?v=2"
+      "hotpot-chef":"assets/characters/totto-hotpot-chef.webp?v=2",
+      "garlic-totto":"assets/characters/totto-garlic.webp?v=1",
+      "fruit-totto":"assets/characters/totto-fruit.webp?v=1"
     };
     const $=s=>document.querySelector(s);
     const $$=s=>[...document.querySelectorAll(s)];
@@ -317,8 +320,14 @@
       $("#skinCount").textContent=1+skins.length;
       $("#clearText").textContent=progress.clears?`已经救出托托 ${progress.clears} 次`:"还没有救出托托";
       $("#hotpotStatus").textContent=progress.completed.includes("hotpot")?"已通关 ✓":"可挑战";
+      const garlicUnlocked=TottoGameConfig.isLevelUnlocked("garlic",progress.completed);
+      const fruitUnlocked=TottoGameConfig.isLevelUnlocked("fruit",progress.completed);
+      $("#garlicLevel").classList.toggle("locked",!garlicUnlocked);
+      $("#fruitLevel").classList.toggle("locked",!fruitUnlocked);
+      $("#garlicStatus").textContent=progress.completed.includes("garlic")?"已通关 ✓":garlicUnlocked?"可挑战":"🔒";
+      $("#fruitStatus").textContent=progress.completed.includes("fruit")?"已通关 ✓":fruitUnlocked?"可挑战":"🔒";
       portrait.src=ASSETS[equipped]||ASSETS.default;
-      $("#speech").textContent=equipped==="hotpot-chef"?"小厨神准备好再下一锅啦！":"今天也想和你一起去捞东西！";
+      $("#speech").textContent=equipped==="hotpot-chef"?"小厨神准备好再下一锅啦！":equipped==="garlic-totto"?"今天身上都是香香的蒜味！":equipped==="fruit-totto"?"戴好水果帽，去夏日果园吧！":"今天也想和你一起去捞东西！";
       $$(".skin[data-skin]").forEach(btn=>{
         const id=btn.dataset.skin,owned=id==="default"||skins.includes(id);
         btn.disabled=!owned;btn.classList.toggle("locked",!owned);btn.classList.toggle("selected",id===equipped);
@@ -412,7 +421,7 @@
       if(button.disabled)return;
       button.disabled=true;button.textContent="托托正在冲向火锅局…";
       document.body.classList.add("departing");
-      setTimeout(()=>{location.href="index.html?from=home&v=5";},720);
+      setTimeout(()=>{location.href="index.html?from=home&level=hotpot&v=6";},720);
     });
     if(window.TottoCloud?.getSession){
       window.TottoCloud.getSession().then(updateAccount).catch(error=>{

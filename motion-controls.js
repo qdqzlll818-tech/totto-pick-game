@@ -6,10 +6,12 @@
   "use strict";
 
   function createShakeDetector(options = {}) {
-    const mediumThreshold = options.mediumThreshold ?? 9;
-    const strongThreshold = options.strongThreshold ?? 13;
-    const cooldownMs = options.cooldownMs ?? 1200;
-    let strongSamples = 0;
+    const mediumThreshold = options.mediumThreshold ?? 10.5;
+    const strongThreshold = options.strongThreshold ?? 17;
+    const gestureWindowMs = options.gestureWindowMs ?? 420;
+    const cooldownMs = options.cooldownMs ?? 1800;
+    const reversalCosine = options.reversalCosine ?? -0.35;
+    let pendingImpulse = null;
     let lastFlipAt = -Infinity;
 
     return {
@@ -19,29 +21,29 @@
         const z = Number(acceleration.z) || 0;
         const magnitude = Math.hypot(x, y, z);
 
-        if (timestamp - lastFlipAt < cooldownMs) return magnitude >= 1.6 ? "light" : "none";
-        if (magnitude < 1.6) {
-          strongSamples = 0;
+        if (timestamp - lastFlipAt < cooldownMs) return "none";
+        if (magnitude < mediumThreshold) return "none";
+
+        const impulse = { x, y, z, magnitude, timestamp };
+        if (!pendingImpulse || timestamp - pendingImpulse.timestamp > gestureWindowMs) {
+          pendingImpulse = impulse;
           return "none";
         }
-        if (magnitude < mediumThreshold) {
-          strongSamples = 0;
-          return "light";
+
+        const dot = x * pendingImpulse.x + y * pendingImpulse.y + z * pendingImpulse.z;
+        const cosine = dot / (magnitude * pendingImpulse.magnitude);
+        if (cosine <= reversalCosine) {
+          const peak = Math.max(magnitude, pendingImpulse.magnitude);
+          pendingImpulse = null;
+          lastFlipAt = timestamp;
+          return peak >= strongThreshold ? "strong" : "medium";
         }
-        if (magnitude >= strongThreshold) {
-          strongSamples += 1;
-          if (strongSamples >= 2) {
-            strongSamples = 0;
-            lastFlipAt = timestamp;
-            return "strong";
-          }
-        } else {
-          strongSamples = 0;
-        }
-        return "medium";
+
+        if (magnitude > pendingImpulse.magnitude) pendingImpulse = impulse;
+        return "none";
       },
       reset() {
-        strongSamples = 0;
+        pendingImpulse = null;
         lastFlipAt = -Infinity;
       }
     };

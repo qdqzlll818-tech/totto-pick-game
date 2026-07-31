@@ -293,7 +293,7 @@
       : "别急，再试一次";
     $("#resultText").textContent = won
       ? `用时 ${Math.floor(seconds / 60)} 分 ${seconds % 60} 秒，得分 ${state.score}。本次获得 ${reward.first ? 100 : 25} 托托金币。`
-      : "撤回和暂存能救急；手机轻晃也可能让下面的物品露出来。";
+      : "撤回和暂存能救急；像翻炒一样用力前后甩动手机，也能翻出下面的物品。";
     const next = level.next;
     $("#nextBtn").textContent = won && next ? `前往${TottoGameConfig.getLevel(next).title}` : "回到托托小屋";
     $("#nextBtn").href = won && next ? `index.html?level=${next}` : "home.html";
@@ -469,7 +469,7 @@
     if (!permission.granted) {
       motionEnabled = false;
       localStorage.removeItem(MOTION_KEY);
-      els.motionStatus.textContent = permission.reason === "unsupported" ? "摇一摇 · 此设备不支持" : "摇一摇 · 未授权";
+      els.motionStatus.textContent = permission.reason === "unsupported" ? "翻锅感应 · 此设备不支持" : "翻锅感应 · 未授权";
       showToast(permission.reason === "unsupported" ? "当前设备可直接使用屏幕道具" : "没有获得动作与方向权限");
       return false;
     }
@@ -477,7 +477,7 @@
     window.addEventListener("devicemotion", onDeviceMotion, { passive: true });
     motionEnabled = true;
     localStorage.setItem(MOTION_KEY, "1");
-    els.motionStatus.textContent = "摇一摇 · 已开启";
+    els.motionStatus.textContent = "翻锅感应 · 已开启";
     els.motionStatus.classList.add("on");
     return true;
   }
@@ -513,7 +513,7 @@
     startTimer();
     showToast(`已继续上次的${level.title}`);
     if (localStorage.getItem(MOTION_KEY) === "1") {
-      els.motionStatus.textContent = "摇一摇 · 点击恢复";
+      els.motionStatus.textContent = "翻锅感应 · 点击恢复";
     }
   }
 
@@ -544,7 +544,7 @@
       applyMotion("medium");
     } else {
       await enableMotion();
-      if (motionEnabled) showToast("摇一摇已经开启");
+      if (motionEnabled) showToast("翻锅感应已经开启");
     }
   });
   document.addEventListener("visibilitychange", () => {

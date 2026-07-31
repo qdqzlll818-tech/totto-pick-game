@@ -39,6 +39,7 @@ test("the current visual and script versions are cache-busted together", async (
   assert.match(html, /game\.css\?v=8/);
   assert.match(html, /game-config\.js\?v=8/);
   assert.match(html, /game-state\.js\?v=8/);
+  assert.match(html, /motion-controls\.js\?v=9/);
   assert.match(html, /item-hit-test\.js\?v=8/);
   assert.match(html, /game-app\.js\?v=8/);
 });

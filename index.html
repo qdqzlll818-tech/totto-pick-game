@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
   <meta name="theme-color" content="#3a2721">
   <title>托托救援队</title>
-  <link rel="stylesheet" href="game.css?v=8">
+  <link rel="stylesheet" href="game.css?v=10">
 </head>
 <body>
   <main class="game-shell">
@@ -32,6 +32,8 @@
       <div><small>本局任务</small><strong id="missionText">找到火锅小厨神托托</strong></div>
       <span class="combo" id="combo">连击 ×0</span>
     </section>
+
+    <section class="theme-hud" id="themeHud" hidden aria-live="polite"></section>
 
     <section class="scene" id="scene">
       <div class="table-props" id="tableProps" aria-hidden="true"><span>🥢</span><span>🫙</span><span>🌿</span></div>
@@ -111,12 +113,13 @@
   <div class="toast" id="toast" role="status"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="cloud-sync.js"></script>
-  <script src="game-config.js?v=8"></script>
-  <script src="game-state.js?v=8"></script>
-  <script src="motion-controls.js?v=9"></script>
-  <script src="board-motion.js"></script>
-  <script src="item-hit-test.js?v=8"></script>
+  <script src="cloud-sync.js?v=10"></script>
+  <script src="game-config.js?v=10"></script>
+  <script src="theme-mechanics.js?v=10"></script>
+  <script src="game-state.js?v=10"></script>
+  <script src="motion-controls.js?v=10"></script>
+  <script src="board-motion.js?v=10"></script>
+  <script src="item-hit-test.js?v=10"></script>
   <script>
     window.fromHome = new URLSearchParams(location.search).get("from") === "home";
     window.playBrandPose = () => {
@@ -126,6 +129,6 @@
       brand.classList.add("arrive");
     };
   </script>
-  <script src="game-app.js?v=8"></script>
+  <script src="game-app.js?v=10"></script>
 </body>
 </html>

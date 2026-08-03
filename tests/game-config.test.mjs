@@ -5,10 +5,54 @@ import test from "node:test";
 const require = createRequire(import.meta.url);
 const {
   LEVELS,
+  ORDER,
   buildPool,
   getLevel,
   isLevelUnlocked
 } = require("../game-config.js");
+
+test("all nine levels have approved totals and order", () => {
+  assert.deepEqual(ORDER, [
+    "hotpot", "garlic", "fruit", "rain", "vanity",
+    "studio", "picnic", "boba", "winter"
+  ]);
+  assert.deepEqual(
+    Object.fromEntries(ORDER.map(id => [id, buildPool(getLevel(id), () => 0.5).length])),
+    {
+      hotpot: 93,
+      garlic: 108,
+      fruit: 126,
+      rain: 135,
+      vanity: 144,
+      studio: 150,
+      picnic: 156,
+      boba: 162,
+      winter: 168
+    }
+  );
+});
+
+test("new levels use local cohesive 3D assets", () => {
+  for (const id of ["rain", "vanity", "studio", "picnic", "boba", "winter"]) {
+    const level = getLevel(id);
+    const regular = level.items.filter(entry => !entry.special);
+    assert.ok(regular.every(entry => entry.asset.startsWith(`assets/${id}/`)), id);
+    assert.ok(regular.every(entry => /\.(png|webp)$/.test(entry.asset)), id);
+    assert.equal(level.items.filter(entry => entry.special)[0].count, 3, id);
+  }
+});
+
+test("every later level requires the immediately previous clear", () => {
+  const completed = [];
+  for (let index = 0; index < ORDER.length; index += 1) {
+    const id = ORDER[index];
+    assert.equal(isLevelUnlocked(id, completed), index === 0, `${id} before prerequisite`);
+    if (index > 0) {
+      completed.push(ORDER[index - 1]);
+      assert.equal(isLevelUnlocked(id, completed), true, `${id} after prerequisite`);
+    }
+  }
+});
 
 test("each level builds the approved total and keeps every type matchable by three", () => {
   const totals = { hotpot: 93, garlic: 108, fruit: 126 };

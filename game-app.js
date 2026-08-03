@@ -21,7 +21,7 @@
     pauseBtn: $("#pauseBtn"), pauseMenu: $("#pauseMenu"), pauseMain: $("#pauseMain"),
     restartConfirm: $("#restartConfirm"), continueBtn: $("#continueBtn"),
     restartBtn: $("#restartBtn"), confirmRestartBtn: $("#confirmRestartBtn"),
-    cancelRestartBtn: $("#cancelRestartBtn")
+    cancelRestartBtn: $("#cancelRestartBtn"), themeHud: $("#themeHud")
   };
 
   let state;
@@ -101,7 +101,7 @@
       return;
     }
 
-    const candidates = [...els.items.querySelectorAll(".item")].map(candidateFromButton);
+    const candidates = [...els.items.querySelectorAll(".item:not(.theme-locked)")].map(candidateFromButton);
     const hit = TottoItemHitTest.pickVisibleCandidate(
       candidates,
       { x: event.clientX, y: event.clientY }
@@ -135,9 +135,9 @@
 
   function readProgress() {
     try {
-      return { completed: [], coins: 0, clears: 0, bestScore: 0, ...JSON.parse(localStorage.getItem(PROGRESS_KEY)) };
+      return { completed: [], coins: 0, clears: 0, bestScore: 0, levels: {}, bobaBonusDate: null, ...JSON.parse(localStorage.getItem(PROGRESS_KEY)) };
     } catch {
-      return { completed: [], coins: 0, clears: 0, bestScore: 0 };
+      return { completed: [], coins: 0, clears: 0, bestScore: 0, levels: {}, bobaBonusDate: null };
     }
   }
 
@@ -166,10 +166,12 @@
     els.items.innerHTML = "";
     active.sort((a, b) => (a.depth ?? a.layer * 1000) - (b.depth ?? b.layer * 1000)).forEach(item => {
       const button = document.createElement("button");
-      button.className = `item${item.special ? " special" : ""}`;
+      const pickable = TottoThemeMechanics.canPickItem(state.theme, item);
+      button.className = `item${item.special ? " special" : ""}${pickable ? "" : " theme-locked"}`;
       button.type = "button";
       button.dataset.uid = item.uid;
       button.setAttribute("aria-label", `选择${item.name}`);
+      button.setAttribute("aria-disabled", String(!pickable));
       button.style.left = `${item.x}%`;
       button.style.top = `${item.y}%`;
       button.style.setProperty("--z", String(10 + Math.round((item.depth ?? item.layer * 1000) / 10)));
@@ -189,12 +191,30 @@
     els.shuffleLeft.textContent = state.shuffleLeft;
     els.moveLeft.textContent = state.moveLeft;
     els.reserveLeft.textContent = state.reserveLeft;
+    renderThemeHud();
     const playing = state.status === "playing" && !isPaused;
     els.undo.disabled = !previousState || !playing;
     els.shuffle.disabled = state.shuffleLeft <= 0 || active.length < 2 || !playing;
     els.move.disabled = state.moveLeft <= 0 || state.tray.length === 0 || !playing;
     els.reserveBtn.disabled = state.reserveLeft <= 0 || state.tray.length === 0 || state.reserve.length >= 2 || !playing;
     save();
+  }
+
+  function renderThemeHud() {
+    const theme = state.theme || { kind: "none" };
+    els.themeHud.hidden = false;
+
+    if (theme.kind === "studio-combo") {
+      els.themeHud.innerHTML = `<span>✨ 灵感连消</span><strong>${theme.streak ? `${theme.streak} 连 · 4 秒内续上` : "三消后 4 秒内继续"}</strong>`;
+    } else if (theme.kind === "boba-orders") {
+      const names = new Map(level.items.map(item => [item.id, item.name]));
+      els.themeHud.innerHTML = `<span>🧋 今日订单</span><div class="order-chips">${theme.orders.map(type => `<b class="${theme.completed.includes(type) ? "done" : ""}">${theme.completed.includes(type) ? "✓ " : ""}${names.get(type) || type}</b>`).join("")}</div>`;
+    } else if (theme.kind === "winter-yarn") {
+      els.themeHud.innerHTML = `<span>🧶 毛线缠绕</span><strong>${theme.lockedUids.length ? `还有 ${theme.lockedUids.length} 件被缠住` : "毛线已经全部解开"}</strong>`;
+    } else {
+      els.themeHud.hidden = true;
+      els.themeHud.innerHTML = "";
+    }
   }
 
   function renderSlots(container, entries, fill) {
@@ -217,6 +237,10 @@
     if (isPaused || resolveLock || state.status !== "playing") return;
     const item = state.items.find(entry => entry.uid === uid && !entry.selected);
     if (!item) return;
+    if (!TottoThemeMechanics.canPickItem(state.theme, item)) {
+      showToast("先消除毛线球，解开这件物品");
+      return;
+    }
     previousState = clone(state);
     item.selected = true;
     state.tray.push({ uid: item.uid, type: item.type, asset: item.asset, name: item.name, special: item.special });
@@ -240,8 +264,21 @@
       const special = match[0].special;
       state.tray = state.tray.filter(item => !ids.has(item.uid));
       state.combo += 1;
-      state.score += 90 + state.combo * 15 + (special ? 300 : 0);
-      showToast(special ? `${level.items.at(-1).name}出现！额外 +300` : `三消成功 · 连击 ${state.combo}`);
+      const themeResult = TottoThemeMechanics.onThemeMatch(
+        state.theme,
+        { type: match[0].type, at: Date.now() },
+        Math.random
+      );
+      state.theme = themeResult.state;
+      state.score += 90 + state.combo * 15 + (special ? 300 : 0) + themeResult.scoreBonus;
+      const mechanicMessage = themeResult.scoreBonus
+        ? `灵感连消 +${themeResult.scoreBonus}`
+        : themeResult.unlockedUids.length
+          ? `毛线松开了 ${themeResult.unlockedUids.length} 件物品`
+          : "";
+      showToast(special
+        ? `${level.items.at(-1).name}出现！额外 +300`
+        : mechanicMessage || `三消成功 · 连击 ${state.combo}`);
       if (navigator.vibrate) navigator.vibrate([20, 35, 20]);
     } else {
       state.combo = 0;
@@ -274,14 +311,41 @@
     const progress = readProgress();
     const first = !progress.completed.includes(level.id);
     if (first) progress.completed.push(level.id);
-    progress.coins += first ? 100 : 25;
+    const baseCoins = first ? 100 : 25;
+    const today = localDateKey(new Date());
+    const ordersComplete = state.theme?.kind === "boba-orders"
+      && state.theme.orders.length === 3
+      && state.theme.orders.every(type => state.theme.completed.includes(type));
+    const dailyBobaBonus = level.id === "boba"
+      && ordersComplete
+      && (window.TottoCloud?.canClaimDailyBonus?.(progress.bobaBonusDate, today)
+        ?? progress.bobaBonusDate !== today);
+    const bonusCoins = dailyBobaBonus ? 10 : 0;
+    if (dailyBobaBonus) progress.bobaBonusDate = today;
+    progress.coins += baseCoins + bonusCoins;
     progress.clears += 1;
     progress.bestScore = Math.max(progress.bestScore || 0, state.score);
+    const currentLevel = progress.levels?.[level.id] || {};
+    progress.levels = {
+      ...(progress.levels || {}),
+      [level.id]: {
+        best_score: Math.max(Number(currentLevel.best_score) || 0, state.score),
+        best_time_ms: [Number(currentLevel.best_time_ms), state.elapsed]
+          .filter(value => Number.isFinite(value) && value > 0)
+          .sort((a, b) => a - b)[0] || null
+      }
+    };
     saveProgress(progress);
     const freshSkin = unlockSkin(level.skin);
     if (freshSkin) localStorage.setItem(EQUIPPED_KEY, level.skin);
     window.TottoCloud?.syncLocalProgress().catch(() => {});
-    return { first, freshSkin };
+    return { first, freshSkin, baseCoins, bonusCoins };
+  }
+
+  function localDateKey(date) {
+    return [date.getFullYear(), date.getMonth() + 1, date.getDate()]
+      .map((value, index) => index ? String(value).padStart(2, "0") : String(value))
+      .join("-");
   }
 
   function openResult(won, reward) {
@@ -292,7 +356,7 @@
       ? reward.freshSkin ? `新皮肤 · ${level.skinName}` : `已拥有 · ${level.skinName}`
       : "别急，再试一次";
     $("#resultText").textContent = won
-      ? `用时 ${Math.floor(seconds / 60)} 分 ${seconds % 60} 秒，得分 ${state.score}。本次获得 ${reward.first ? 100 : 25} 托托金币。`
+      ? `用时 ${Math.floor(seconds / 60)} 分 ${seconds % 60} 秒，得分 ${state.score}。本次获得 ${reward.baseCoins + reward.bonusCoins} 托托金币${reward.bonusCoins ? "（含今日订单 +10）" : ""}。`
       : "撤回和暂存能救急；像翻炒一样用力前后甩动手机，也能翻出下面的物品。";
     const next = level.next;
     $("#nextBtn").textContent = won && next ? `前往${TottoGameConfig.getLevel(next).title}` : "回到托托小屋";

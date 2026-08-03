@@ -4,11 +4,23 @@ import test from "node:test";
 
 const read = path => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
+test("home builds every map and wardrobe card from game configuration", async () => {
+  const home = await read("home.html");
+
+  assert.match(home, /id="levelList"/);
+  assert.match(home, /id="skinGrid"/);
+  assert.match(home, /TottoGameConfig\.ORDER\.map/);
+  assert.match(home, /level\.skinAsset/);
+  assert.match(home, /index\.html\?level=\$\{level\.id\}/);
+  assert.doesNotMatch(home, /id="garlicLevel"/);
+  assert.doesNotMatch(home, /id="fruitLevel"/);
+});
+
 test("home renders Totto as a lightweight image without 3D dependencies", async () => {
   const home = await read("home.html");
   assert.match(home, /id="tottoStage"/);
   assert.match(home, /id="tottoPortrait"/);
-  assert.match(home, /src="assets\/characters\/totto-default\.webp\?v=2"/);
+  assert.match(home, /src="assets\/characters\/totto-default\.webp\?v=3"/);
   assert.match(home, /id="startAdventure"/);
   assert.match(home, /和托托一起出发/);
   assert.doesNotMatch(home, /<model-viewer/);
@@ -25,7 +37,13 @@ test("published Totto wardrobe images are valid WebP files", async () => {
     "../assets/characters/totto-default.webp",
     "../assets/characters/totto-hotpot-chef.webp",
     "../assets/characters/totto-garlic-approved.webp",
-    "../assets/characters/totto-fruit-approved.webp"
+    "../assets/characters/totto-fruit-approved.webp",
+    "../assets/characters/totto-rain.webp",
+    "../assets/characters/totto-vanity.webp",
+    "../assets/characters/totto-artist.webp",
+    "../assets/characters/totto-picnic.webp",
+    "../assets/characters/totto-boba.webp",
+    "../assets/characters/totto-winter.webp"
   ]) {
     const image = await readFile(new URL(path, import.meta.url));
     assert.equal(image.toString("ascii", 0, 4), "RIFF");
@@ -59,7 +77,7 @@ test("home transition is carried into the game", async () => {
 
 test("game loads the current save-migration script instead of a cached copy", async () => {
   const game = await read("index.html");
-  assert.match(game, /<script src="game-state\.js\?v=8"><\/script>/);
+  assert.match(game, /<script src="game-state\.js\?v=10"><\/script>/);
 });
 
 test("image character keeps touch and keyboard interactions", async () => {

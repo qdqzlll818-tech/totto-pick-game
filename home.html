@@ -207,7 +207,7 @@
         <div class="mission-tag">🍲 火锅救援进行中</div>
         <div class="rescue-portal" aria-hidden="true"></div>
         <div class="speech" id="speech">点点我，我们一起出发吧！</div>
-        <img class="totto-portrait" id="tottoPortrait" src="assets/characters/totto-default.webp?v=2" alt="托托" role="button" tabindex="0" draggable="false" aria-label="摸摸托托">
+        <img class="totto-portrait" id="tottoPortrait" src="assets/characters/totto-default.webp?v=3" alt="托托" role="button" tabindex="0" draggable="false" aria-label="摸摸托托">
         <div class="nameplate">Totto · 托托</div>
         <button class="adventure" id="startAdventure">和托托一起出发　➜</button>
       </div>
@@ -227,39 +227,14 @@
     <section class="view" id="wardrobeView">
       <section class="panel">
         <div class="panel-head"><h2>托托衣柜</h2><span>点击即可换装</span></div>
-        <div class="wardrobe" id="wardrobe">
-          <button class="skin" data-skin="default">
-            <img src="assets/characters/totto-default.webp?v=2" alt="原始托托"><small>原始托托</small>
-          </button>
-          <button class="skin" data-skin="hotpot-chef">
-            <img src="assets/characters/totto-hotpot-chef.webp?v=2" alt="火锅小厨神"><small>火锅小厨神</small>
-          </button>
-          <button class="skin locked" data-skin="garlic-totto" disabled><img src="assets/characters/totto-garlic-approved.webp" alt="蒜香小围裙"><small>蒜香小围裙</small></button>
-          <button class="skin locked" data-skin="fruit-totto" disabled><img src="assets/characters/totto-fruit-approved.webp" alt="夏日水果帽"><small>夏日水果帽</small></button>
-        </div>
+        <div class="wardrobe" id="skinGrid"></div>
       </section>
     </section>
 
     <section class="view" id="mapView">
       <section class="panel">
         <div class="panel-head"><h2>托托救援地图</h2><span>每关解锁一套皮肤</span></div>
-        <div class="map">
-          <a class="level" href="index.html?level=hotpot">
-            <span class="level-icon">🍲</span>
-            <span class="level-text"><b>第1关 · 火锅局</b><small>解锁火锅小厨神</small></span>
-            <span class="level-reward" id="hotpotStatus">可挑战</span>
-          </a>
-          <a class="level locked" id="garlicLevel" href="index.html?level=garlic">
-            <span class="level-icon">🧄</span>
-            <span class="level-text"><b>第2关 · 大蒜局</b><small>108 个物品 · 解锁蒜香小围裙</small></span>
-            <span class="level-reward" id="garlicStatus">🔒</span>
-          </a>
-          <a class="level locked" id="fruitLevel" href="index.html?level=fruit">
-            <span class="level-icon">🍉</span>
-            <span class="level-text"><b>第3关 · 水果局</b><small>126 个物品 · 解锁夏日水果帽</small></span>
-            <span class="level-reward" id="fruitStatus">🔒</span>
-          </a>
-        </div>
+        <div class="map" id="levelList"></div>
       </section>
     </section>
   </main>
@@ -284,23 +259,33 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="cloud-sync.js"></script>
-  <script src="game-config.js"></script>
+  <script src="cloud-sync.js?v=10"></script>
+  <script src="game-config.js?v=10"></script>
   <script>
   (()=> {
     "use strict";
     const SKIN_KEY="totto-pick-skins-v1";
     const EQUIPPED_KEY="totto-pick-equipped-skin-v1";
     const PROGRESS_KEY="totto-pick-progress-v1";
-    const ASSETS={
-      default:"assets/characters/totto-default.webp?v=2",
-      "hotpot-chef":"assets/characters/totto-hotpot-chef.webp?v=2",
-      "garlic-totto":"assets/characters/totto-garlic-approved.webp?v=1",
-      "fruit-totto":"assets/characters/totto-fruit-approved.webp?v=1"
+    const DEFAULT_SKIN={
+      id:"default",name:"原始托托",asset:"assets/characters/totto-default.webp?v=3"
+    };
+    const SKIN_LINES={
+      default:"今天也想和你一起去捞东西！",
+      "hotpot-chef":"小厨神准备好再下一锅啦！",
+      "garlic-totto":"今天身上都是香香的蒜味！",
+      "fruit-totto":"戴好水果帽，去夏日果园吧！",
+      "rain-totto":"下雨也要一起去寻找失物！",
+      "vanity-totto":"今天也要把自己收拾得漂漂亮亮！",
+      "artist-totto":"灵感来了，我们去画画吧！",
+      "picnic-totto":"野餐篮已经准备好啦！",
+      "boba-totto":"今天请你喝一杯托托奶茶！",
+      "winter-totto":"围好围巾，一起去救援吧！"
     };
     const $=s=>document.querySelector(s);
     const $$=s=>[...document.querySelectorAll(s)];
     const portrait=$("#tottoPortrait");
+    const cacheAsset=asset=>asset.includes("?")?asset:`${asset}?v=3`;
     function read(key,fallback){try{return JSON.parse(localStorage.getItem(key))??fallback}catch(e){return fallback}}
     let skins=[];
     let progress={completed:[],coins:0,clears:0,bestScore:0};
@@ -314,30 +299,53 @@
       if(equipped!=="default"&&!skins.includes(equipped))equipped="default";
     }
 
+    function skinEntries(){
+      return [DEFAULT_SKIN,...TottoGameConfig.ORDER.map(id=>{
+        const level=TottoGameConfig.getLevel(id);
+        return {id:level.skin,name:level.skinName,asset:level.skinAsset};
+      })];
+    }
+
+    function renderLevelCards(){
+      $("#levelList").innerHTML=TottoGameConfig.ORDER.map(id=>{
+        const level=TottoGameConfig.getLevel(id);
+        const unlocked=TottoGameConfig.isLevelUnlocked(id,progress.completed);
+        const cleared=progress.completed.includes(id);
+        return `<a class="level${unlocked?"":" locked"}" data-level="${id}" href="${unlocked?`index.html?level=${level.id}`:"#"}" aria-disabled="${unlocked?"false":"true"}">
+          <span class="level-icon">${level.icon}</span>
+          <span class="level-text"><b>第${level.order+1}关 · ${level.title}</b><small>${level.total} 个物品 · 解锁${level.skinName}</small></span>
+          <span class="level-reward">${cleared?"已通关 ✓":unlocked?"可挑战":"🔒"}</span>
+        </a>`;
+      }).join("");
+    }
+
+    function renderSkinCards(){
+      $("#skinGrid").innerHTML=skinEntries().map(entry=>{
+        const owned=entry.id==="default"||skins.includes(entry.id);
+        return `<button class="skin${owned?"":" locked"}${entry.id===equipped?" selected":""}" data-skin="${entry.id}" ${owned?"":"disabled"}>
+          <img src="${cacheAsset(entry.asset)}" alt="${entry.name}"><small>${entry.name}</small>
+        </button>`;
+      }).join("");
+    }
+
     function render(){
       $("#levelCount").textContent=progress.completed.length;
       $("#coinCount").textContent=progress.coins;
       $("#skinCount").textContent=1+skins.length;
       $("#clearText").textContent=progress.clears?`已经救出托托 ${progress.clears} 次`:"还没有救出托托";
-      $("#hotpotStatus").textContent=progress.completed.includes("hotpot")?"已通关 ✓":"可挑战";
-      const garlicUnlocked=TottoGameConfig.isLevelUnlocked("garlic",progress.completed);
-      const fruitUnlocked=TottoGameConfig.isLevelUnlocked("fruit",progress.completed);
-      $("#garlicLevel").classList.toggle("locked",!garlicUnlocked);
-      $("#fruitLevel").classList.toggle("locked",!fruitUnlocked);
-      $("#garlicStatus").textContent=progress.completed.includes("garlic")?"已通关 ✓":garlicUnlocked?"可挑战":"🔒";
-      $("#fruitStatus").textContent=progress.completed.includes("fruit")?"已通关 ✓":fruitUnlocked?"可挑战":"🔒";
-      portrait.src=ASSETS[equipped]||ASSETS.default;
-      $("#speech").textContent=equipped==="hotpot-chef"?"小厨神准备好再下一锅啦！":equipped==="garlic-totto"?"今天身上都是香香的蒜味！":equipped==="fruit-totto"?"戴好水果帽，去夏日果园吧！":"今天也想和你一起去捞东西！";
-      $$(".skin[data-skin]").forEach(btn=>{
-        const id=btn.dataset.skin,owned=id==="default"||skins.includes(id);
-        btn.disabled=!owned;btn.classList.toggle("locked",!owned);btn.classList.toggle("selected",id===equipped);
-      });
+      renderLevelCards();
+      renderSkinCards();
+      const selected=skinEntries().find(entry=>entry.id===equipped)||DEFAULT_SKIN;
+      portrait.src=cacheAsset(selected.asset);
+      $("#speech").textContent=SKIN_LINES[equipped]||SKIN_LINES.default;
     }
-    $$(".skin[data-skin]").forEach(btn=>btn.addEventListener("click",()=>{
-      if(btn.disabled)return;
+
+    $("#skinGrid").addEventListener("click",event=>{
+      const btn=event.target.closest(".skin[data-skin]");
+      if(!btn||btn.disabled)return;
       equipped=btn.dataset.skin;localStorage.setItem(EQUIPPED_KEY,equipped);render();
       window.TottoCloud?.syncLocalProgress().catch(()=>{});
-    }));
+    });
     $$(".nav").forEach(btn=>btn.addEventListener("click",()=>{
       $$(".nav").forEach(n=>n.classList.toggle("active",n===btn));
       $$(".view").forEach(v=>v.classList.toggle("active",v.id===btn.dataset.view));

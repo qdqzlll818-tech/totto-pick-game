@@ -1,4 +1,4 @@
-(() => {
+(root => {
   "use strict";
 
   const SUPABASE_URL = "https://xbvgmkikyhhpsqirqwjs.supabase.co";
@@ -22,12 +22,31 @@
     return [...new Set(values.filter(Boolean))];
   }
 
+  function mergeLevelRows(localRows, remoteRows) {
+    const rows = new Map();
+    for (const row of [...localRows, ...remoteRows]) {
+      const current = rows.get(row.level_id);
+      rows.set(row.level_id, {
+        level_id: row.level_id,
+        best_score: Math.max(current?.best_score || 0, row.best_score || 0),
+        best_time_ms: [current?.best_time_ms, row.best_time_ms]
+          .filter(value => Number.isFinite(value) && value > 0)
+          .sort((a, b) => a - b)[0] || null
+      });
+    }
+    return [...rows.values()];
+  }
+
+  function canClaimDailyBonus(lastDate, today) {
+    return lastDate !== today;
+  }
+
   function getClient() {
     if (client) return client;
-    if (!window.supabase?.createClient) {
+    if (!root.supabase?.createClient) {
       throw new Error("云同步组件加载失败，请刷新页面重试");
     }
-    client = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+    client = root.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
@@ -43,15 +62,26 @@
       completed: Array.isArray(rawProgress.completed) ? unique(rawProgress.completed) : [],
       coins: Math.max(0, Number(rawProgress.coins) || 0),
       clears: Math.max(0, Number(rawProgress.clears) || 0),
-      bestScore: Math.max(0, Number(rawProgress.bestScore) || 0)
+      bestScore: Math.max(0, Number(rawProgress.bestScore) || 0),
+      levels: rawProgress.levels && typeof rawProgress.levels === "object" ? rawProgress.levels : {},
+      bobaBonusDate: rawProgress.bobaBonusDate || null
     };
     const skins = unique(readJson(SKIN_KEY, []));
     const equipped = localStorage.getItem(EQUIPPED_KEY) || "default";
-    return { progress, skins, equipped };
+    const levels = Object.entries(progress.levels).map(([level_id, values]) => ({
+      level_id,
+      best_score: Math.max(0, Number(values?.best_score) || 0),
+      best_time_ms: Number(values?.best_time_ms) > 0 ? Number(values.best_time_ms) : null
+    }));
+    return { progress, skins, equipped, levels };
   }
 
   function saveLocalData(data) {
-    localStorage.setItem(PROGRESS_KEY, JSON.stringify(data.progress));
+    const levels = Object.fromEntries((data.levels || []).map(row => [row.level_id, {
+      best_score: row.best_score,
+      best_time_ms: row.best_time_ms
+    }]));
+    localStorage.setItem(PROGRESS_KEY, JSON.stringify({ ...data.progress, levels }));
     localStorage.setItem(SKIN_KEY, JSON.stringify(data.skins));
     localStorage.setItem(EQUIPPED_KEY, data.equipped);
   }
@@ -63,7 +93,7 @@
   }
 
   async function signInWithEmail(email) {
-    const redirectTo = `${location.origin}${location.pathname}`;
+    const redirectTo = `${root.location.origin}${root.location.pathname}`;
     const { error } = await getClient().auth.signInWithOtp({
       email,
       options: { emailRedirectTo: redirectTo }
@@ -100,7 +130,8 @@
       ...remoteLevels.filter(row => row.completed).map(row => row.level_id)
     ]);
     const skins = unique([...local.skins, ...remoteSkins]);
-    const remoteBest = Math.max(0, ...remoteLevels.map(row => Number(row.best_score) || 0));
+    const levels = mergeLevelRows(local.levels, remoteLevels);
+    const remoteBest = Math.max(0, ...levels.map(row => Number(row.best_score) || 0));
     const progress = {
       completed,
       coins: Math.max(local.progress.coins, Number(profile?.coins) || 0),
@@ -114,7 +145,7 @@
     }
     if (equipped !== "default" && !skins.includes(equipped)) equipped = "default";
 
-    const merged = { progress, skins, equipped };
+    const merged = { progress, skins, equipped, levels };
     saveLocalData(merged);
 
     const writes = [
@@ -131,16 +162,14 @@
 
     if (completed.length) {
       writes.push(api.from("level_progress").upsert(completed.map(levelId => {
+        const current = levels.find(row => row.level_id === levelId);
         const remote = remoteLevels.find(row => row.level_id === levelId);
         return {
           user_id: userId,
           level_id: levelId,
           completed: true,
-          best_score: Math.max(
-            Number(remote?.best_score) || 0,
-            levelId === "hotpot" ? progress.bestScore : 0
-          ),
-          best_time_ms: remote?.best_time_ms ?? null,
+          best_score: current?.best_score || 0,
+          best_time_ms: current?.best_time_ms ?? null,
           completed_at: remote?.completed_at || new Date().toISOString()
         };
       })));
@@ -157,7 +186,7 @@
     const writeError = results.find(result => result.error)?.error;
     if (writeError) throw writeError;
 
-    window.dispatchEvent(new CustomEvent("totto:cloud-synced", {
+    root.dispatchEvent(new root.CustomEvent("totto:cloud-synced", {
       detail: { ...merged, user: session.user }
     }));
     return { ...merged, user: session.user };
@@ -175,13 +204,20 @@
     return getClient().auth.onAuthStateChange((event, session) => callback(event, session));
   }
 
-  window.TottoCloud = {
+  const api = {
     getClient,
     getSession,
     signInWithEmail,
     signOut,
     syncLocalProgress,
     onAuthStateChange,
-    getLocalData
+    getLocalData,
+    unique,
+    mergeLevelRows,
+    canClaimDailyBonus
   };
-})();
+  if (typeof module === "object" && module.exports) {
+    module.exports = { unique, mergeLevelRows, canClaimDailyBonus };
+  }
+  if (root) root.TottoCloud = api;
+})(typeof globalThis !== "undefined" ? globalThis : this);

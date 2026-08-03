@@ -2,10 +2,13 @@
   const config = typeof module === "object" && module.exports
     ? require("./game-config.js")
     : root.TottoGameConfig;
-  const api = factory(config);
+  const mechanics = typeof module === "object" && module.exports
+    ? require("./theme-mechanics.js")
+    : root.TottoThemeMechanics;
+  const api = factory(config, mechanics);
   if (typeof module === "object" && module.exports) module.exports = api;
   if (root) root.TottoGameState = api;
-})(typeof globalThis !== "undefined" ? globalThis : this, function createGameState(config) {
+})(typeof globalThis !== "undefined" ? globalThis : this, function createGameState(config, mechanics) {
   "use strict";
 
   const LAYOUT_VERSION = 4;
@@ -56,11 +59,12 @@
   function createGame(level, random = Math.random) {
     const resolved = config.getLevel(level?.id);
     const pool = shuffle(config.buildPool(resolved, random), random);
+    const items = placeItems(pool, resolved, random);
 
     return {
       levelId: resolved.id,
       layoutVersion: LAYOUT_VERSION,
-      items: placeItems(pool, resolved, random),
+      items,
       tray: [],
       reserve: [],
       score: 0,
@@ -70,7 +74,8 @@
       reserveLeft: 2,
       startedAt: Date.now(),
       elapsed: 0,
-      status: "playing"
+      status: "playing",
+      theme: mechanics.createThemeState(resolved, items, random)
     };
   }
 
@@ -98,6 +103,9 @@
           const migrated = new Map([...active, ...selected].map(item => [item.uid, item]));
           saved.items = saved.items.map(item => migrated.get(item.uid));
           saved.layoutVersion = LAYOUT_VERSION;
+        }
+        if (!saved.theme || typeof saved.theme !== "object") {
+          saved.theme = mechanics.createThemeState(resolved, saved.items, random);
         }
         return saved;
       }

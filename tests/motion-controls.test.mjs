@@ -53,3 +53,30 @@ test("quiet sensor noise does not trigger board movement", () => {
   const detector = createShakeDetector();
   assert.equal(detector.update({ x: 0.3, y: 0.2, z: 0.1 }, 1000), "none");
 });
+
+test("detailed detection returns one bounded board direction for a valid reversal", () => {
+  const detector = createShakeDetector({ cooldownMs: 1600 });
+
+  assert.equal(detector.updateDetailed({ x: 1.1, y: 0.6, z: 0.4 }, 900).strength, "none");
+  assert.equal(detector.updateDetailed({ x: 13, y: 1, z: 3 }, 1000).strength, "none");
+  const result = detector.updateDetailed({ x: -14, y: -1, z: -4 }, 1190);
+
+  assert.equal(result.strength, "medium");
+  assert.ok(Math.hypot(result.direction.x, result.direction.y) <= 1.000001);
+  assert.ok(Math.abs(result.direction.x) <= 1 && Math.abs(result.direction.y) <= 1);
+  assert.equal(detector.updateDetailed({ x: 15, y: 1, z: 4 }, 1300).strength, "none");
+});
+
+test("slow tilt and repeated same-direction impulses never form a gesture", () => {
+  const detector = createShakeDetector();
+  const samples = [
+    { x: 0, y: 1, z: 2 },
+    { x: 0, y: 2, z: 4 },
+    { x: 0, y: 3, z: 6 },
+    { x: 0, y: 4, z: 11 },
+    { x: 0, y: 4, z: 12 }
+  ];
+  samples.forEach((sample, index) => {
+    assert.equal(detector.updateDetailed(sample, 1000 + index * 100).strength, "none");
+  });
+});

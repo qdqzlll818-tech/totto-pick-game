@@ -86,6 +86,11 @@ test("garlic mission and reward use the cache-safe approved Totto artwork", () =
   assert.equal(themedTotto.asset, approvedAsset);
 });
 
+test("black garlic uses the opaque replacement sprite", () => {
+  const blackGarlic = getLevel("garlic").items.find(item => item.id === "purple-garlic");
+  assert.equal(blackGarlic.asset, "assets/garlic/purple-garlic-opaque.png");
+});
+
 test("fruit mission and reward use one cache-safe approved Totto artwork", () => {
   const fruit = getLevel("fruit");
   const themedTotto = fruit.items.find(item => item.special);
@@ -110,7 +115,7 @@ test("hotpot uses cohesive local 3D food renders instead of platform emoji", () 
   const food = hotpot.filter(item => !item.special);
 
   assert.ok(food.length > 0);
-  assert.ok(food.every(item => /^assets\/food\/[a-z-]+\.png$/.test(item.asset)));
+  assert.ok(food.every(item => /^assets\/food\/[a-z-]+\.(png|webp)$/.test(item.asset)));
   assert.equal(new Set(food.map(item => item.type)).size, 7);
 });
 
@@ -123,7 +128,7 @@ test("every level uses cohesive local 3D renders instead of platform emoji", () 
 
   for (const [id, folder] of Object.entries(assetFolders)) {
     const regularItems = buildPool(getLevel(id), () => 0.5).filter(item => !item.special);
-    const localAsset = new RegExp(`^assets/${folder}/[a-z-]+\\.png$`);
+    const localAsset = new RegExp(`^assets/${folder}/[a-z-]+\\.(png|webp)$`);
 
     assert.ok(regularItems.length > 0, id);
     assert.ok(regularItems.every(item => localAsset.test(item.asset)), id);

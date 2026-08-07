@@ -4,7 +4,7 @@
   "scripts": {
     "serve": "python3 -m http.server 4173",
     "test": "node --test tests/*.test.mjs",
-    "test:syntax": "node --check cloud-sync.js && node --check totto-3d.js && node --check game-config.js && node --check game-state.js && node --check theme-mechanics.js && node --check game-app.js",
-    "test:assets": "node scripts/validate-assets.mjs assets/rain/*.png assets/vanity/*.png assets/studio/*.png assets/picnic/*.png assets/boba/*.png assets/winter/*.png"
+    "test:syntax": "node --check cloud-sync.js && node --check totto-3d.js && node --check game-config.js && node --check game-state.js && node --check theme-mechanics.js && node --check motion-controls.js && node --check board-motion.js && node --check item-hit-test.js && node --check game-app.js",
+    "test:assets": "node scripts/validate-assets.mjs"
   }
 }

@@ -3,8 +3,9 @@ import { createRequire } from "node:module";
 import test from "node:test";
 
 const require = createRequire(import.meta.url);
-const { getLevel } = require("../game-config.js");
+const { getLevel, ORDER } = require("../game-config.js");
 const { createGame, restoreGame } = require("../game-state.js");
+const boardMotion = require("../board-motion.js");
 
 test("shared game state builds the selected level with the configured item count", () => {
   for (const id of ["hotpot", "garlic", "fruit"]) {
@@ -17,6 +18,10 @@ test("shared game state builds the selected level with the configured item count
     assert.deepEqual(state.tray, []);
     assert.deepEqual(state.reserve, []);
     assert.ok(state.items.every(item => item.layer >= 0));
+    assert.ok(state.items.every(item => Number.isFinite(item.z)));
+    assert.ok(state.items.every(item => Array.isArray(item.supportUids)));
+    assert.ok(state.items.every(item => Array.isArray(item.occluderUids)));
+    assert.ok(state.items.every(item => item.motionState === "stable"));
   }
 });
 
@@ -35,7 +40,7 @@ test("initial boards form a dense layered pile without a hollow center", () => {
     assert.ok(new Set(state.items.map(item => item.scale)).size > 2);
     assert.ok(distances.every(distance => distance <= 1), `${id} stays inside the pot`);
     assert.ok(distances.filter(distance => distance >= 0.78).length >= 9, `${id} fills the outer bowl`);
-    assert.equal(state.layoutVersion, 4);
+    assert.equal(state.layoutVersion, 5);
   }
 });
 
@@ -117,10 +122,52 @@ test("old ring-layout saves migrate into a dense pile without losing progress", 
     (item.y - 50) / 38
   ) <= 0.24).length;
 
-  assert.equal(restored.layoutVersion, 4);
+  assert.equal(restored.layoutVersion, 5);
   assert.equal(restored.score, 20);
   assert.equal(restored.tray.length, 2);
   assert.equal(active.length, 106);
   assert.ok(centerCount >= 3);
   assert.ok(active.every(item => item.depth !== undefined && item.scale !== undefined));
+});
+
+test("version four saves gain physics state without losing progress", () => {
+  const level = getLevel("garlic");
+  const saved = createGame(level, () => 0.42);
+  saved.layoutVersion = 4;
+  saved.score = 120;
+  for (const item of saved.items) {
+    delete item.z;
+    delete item.supportUids;
+    delete item.occluderUids;
+    delete item.motionState;
+  }
+
+  const restored = restoreGame(JSON.stringify(saved), level, () => 0.42);
+  assert.equal(restored.score, 120);
+  assert.equal(restored.layoutVersion, 5);
+  assert.ok(restored.items.every(item => Number.isFinite(item.z)));
+  assert.ok(restored.items.every(item => item.motionState === "stable"));
+});
+
+test("all nine physics boards can be drained without an occlusion deadlock", () => {
+  for (const [levelIndex, id] of ORDER.entries()) {
+    const state = createGame(getLevel(id), boardMotion.createSeededRandom(900 + levelIndex));
+    let steps = 0;
+    while (steps < state.items.length) {
+      const item = state.items
+        .filter(candidate => boardMotion.canPickItem(candidate))
+        .sort((left, right) => right.z - left.z)[0];
+      assert.ok(item, `${id} has a pickable item at step ${steps}`);
+      const result = boardMotion.planRemoval(
+        state.items,
+        item.uid,
+        boardMotion.createSeededRandom(2_000 + steps)
+      );
+      item.selected = true;
+      boardMotion.finalizePlans(state.items, result.plans);
+      assert.ok(state.items.filter(candidate => !candidate.selected).every(boardMotion.isInsidePot), id);
+      steps += 1;
+    }
+    assert.equal(steps, state.items.length, id);
+  }
 });

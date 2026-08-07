@@ -28,7 +28,7 @@ test("paused games freeze time and reject board input until continued", async ()
   assert.match(source, /let isPaused = false/);
   assert.match(source, /function pauseGame\(\)/);
   assert.match(source, /function continueGame\(\)/);
-  assert.match(source, /if \(isPaused \|\| resolveLock/);
+  assert.match(source, /if \(!boardReady \|\| isPaused \|\| resolveLock \|\| physicsLock/);
   assert.match(source, /state\.status === "playing" && !isPaused/);
   assert.match(source, /els\.pauseMenu\.classList\.add\("show"\)/);
 });
@@ -36,11 +36,12 @@ test("paused games freeze time and reject board input until continued", async ()
 test("the current visual and script versions are cache-busted together", async () => {
   const html = await read("index.html");
 
-  assert.match(html, /game\.css\?v=10/);
-  assert.match(html, /game-config\.js\?v=10/);
-  assert.match(html, /theme-mechanics\.js\?v=10/);
-  assert.match(html, /game-state\.js\?v=10/);
-  assert.match(html, /motion-controls\.js\?v=10/);
-  assert.match(html, /item-hit-test\.js\?v=10/);
-  assert.match(html, /game-app\.js\?v=10/);
+  assert.match(html, /game\.css\?v=11/);
+  assert.match(html, /game-config\.js\?v=11/);
+  assert.match(html, /theme-mechanics\.js\?v=11/);
+  assert.match(html, /motion-controls\.js\?v=11/);
+  assert.match(html, /board-motion\.js\?v=11/);
+  assert.match(html, /game-state\.js\?v=11/);
+  assert.match(html, /item-hit-test\.js\?v=11/);
+  assert.match(html, /game-app\.js\?v=11/);
 });

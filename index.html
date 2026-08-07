@@ -1,11 +1,24 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
+  <script>
+    if (new URLSearchParams(location.search).get("dev") === "1"
+      && "PerformanceObserver" in window
+      && PerformanceObserver.supportedEntryTypes?.includes("longtask")) {
+      window.__tottoStartupLongTasks = [];
+      new PerformanceObserver(list => {
+        window.__tottoStartupLongTasks.push(...list.getEntries().map(entry => ({
+          startTime: entry.startTime,
+          duration: entry.duration
+        })));
+      }).observe({ type: "longtask", buffered: true });
+    }
+  </script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
   <meta name="theme-color" content="#3a2721">
   <title>托托救援队</title>
-  <link rel="stylesheet" href="game.css?v=10">
+  <link rel="stylesheet" href="game.css?v=11">
 </head>
 <body>
   <main class="game-shell">
@@ -74,6 +87,7 @@
       <button class="motion-choice selected" id="motionChoice" type="button">
         <span>📱</span><b>开启手机翻锅感应</b><small>像翻炒一样用力前后甩动，走路和轻晃不会触发</small>
       </button>
+      <p class="loading-status" id="loadingStatus" role="status">正在准备本关素材…</p>
       <button class="primary" id="startBtn" type="button">开始救援</button>
       <button class="text-button" id="skipIntro" type="button">暂不开启翻锅感应</button>
     </section>
@@ -112,14 +126,23 @@
 
   <div class="toast" id="toast" role="status"></div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="cloud-sync.js?v=10"></script>
-  <script src="game-config.js?v=10"></script>
-  <script src="theme-mechanics.js?v=10"></script>
-  <script src="game-state.js?v=10"></script>
-  <script src="motion-controls.js?v=10"></script>
-  <script src="board-motion.js?v=10"></script>
-  <script src="item-hit-test.js?v=10"></script>
+  <aside class="physics-debug" id="physicsDebug" hidden>
+    <strong>2.5D 物理调试</strong>
+    <output id="physicsDebugStatus">等待物品稳定</output>
+    <div>
+      <button id="debugExtractBtn" type="button">模拟抽取</button>
+      <button id="debugShakeBtn" type="button">模拟翻锅</button>
+    </div>
+  </aside>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="cloud-sync.js?v=11"></script>
+  <script src="game-config.js?v=11"></script>
+  <script src="theme-mechanics.js?v=11"></script>
+  <script src="motion-controls.js?v=11"></script>
+  <script src="board-motion.js?v=11"></script>
+  <script src="game-state.js?v=11"></script>
+  <script src="item-hit-test.js?v=11"></script>
   <script>
     window.fromHome = new URLSearchParams(location.search).get("from") === "home";
     window.playBrandPose = () => {
@@ -129,6 +152,6 @@
       brand.classList.add("arrive");
     };
   </script>
-  <script src="game-app.js?v=10"></script>
+  <script src="game-app.js?v=11"></script>
 </body>
 </html>

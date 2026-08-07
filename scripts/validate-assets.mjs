@@ -1,8 +1,17 @@
 import { readFile, stat } from "node:fs/promises";
+import { createRequire } from "node:module";
 
-const paths = process.argv.slice(2);
-if (!paths.length) throw new Error("pass at least one asset path");
+const require = createRequire(import.meta.url);
+const { LEVELS } = require("../game-config.js");
+const configured = Object.values(LEVELS).flatMap(level => [
+  level.skinAsset,
+  ...level.items.map(item => item.asset)
+]);
+const paths = [...new Set(configured.filter(path => path && !path.startsWith("emoji:")))];
 
+if (!paths.length) throw new Error("no configured image assets found");
+
+let totalBytes = 0;
 for (const path of paths) {
   const [bytes, info] = await Promise.all([readFile(path), stat(path)]);
 
@@ -20,9 +29,13 @@ for (const path of paths) {
     if (bytes.subarray(-12).toString("hex") !== "0000000049454e44ae426082") {
       throw new Error(`${path}: truncated PNG file`);
     }
+  } else {
+    throw new Error(`${path}: unsupported configured image format`);
   }
 
-  if (info.size < 10_000) throw new Error(`${path}: suspiciously small`);
-  if (info.size > 900_000) throw new Error(`${path}: exceeds web budget`);
-  console.log(`${path}: ${info.size} bytes`);
+  if (info.size < 2_000) throw new Error(`${path}: suspiciously small`);
+  if (info.size > 450_000) throw new Error(`${path}: exceeds mobile image budget`);
+  totalBytes += info.size;
 }
+
+console.log(`${paths.length} configured images valid · ${totalBytes} bytes total`);

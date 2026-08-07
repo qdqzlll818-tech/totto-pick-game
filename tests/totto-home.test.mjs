@@ -77,7 +77,7 @@ test("home transition is carried into the game", async () => {
 
 test("game loads the current save-migration script instead of a cached copy", async () => {
   const game = await read("index.html");
-  assert.match(game, /<script src="game-state\.js\?v=10"><\/script>/);
+  assert.match(game, /<script src="game-state\.js\?v=11"><\/script>/);
 });
 
 test("image character keeps touch and keyboard interactions", async () => {

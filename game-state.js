@@ -5,13 +5,16 @@
   const mechanics = typeof module === "object" && module.exports
     ? require("./theme-mechanics.js")
     : root.TottoThemeMechanics;
-  const api = factory(config, mechanics);
+  const physics = typeof module === "object" && module.exports
+    ? require("./board-motion.js")
+    : root.TottoBoardMotion;
+  const api = factory(config, mechanics, physics);
   if (typeof module === "object" && module.exports) module.exports = api;
   if (root) root.TottoGameState = api;
-})(typeof globalThis !== "undefined" ? globalThis : this, function createGameState(config, mechanics) {
+})(typeof globalThis !== "undefined" ? globalThis : this, function createGameState(config, mechanics, physics) {
   "use strict";
 
-  const LAYOUT_VERSION = 4;
+  const LAYOUT_VERSION = 5;
 
   function shuffle(items, random) {
     for (let index = items.length - 1; index > 0; index -= 1) {
@@ -60,6 +63,8 @@
     const resolved = config.getLevel(level?.id);
     const pool = shuffle(config.buildPool(resolved, random), random);
     const items = placeItems(pool, resolved, random);
+    physics.ensurePhysicsState(items);
+    physics.rebuildRelations(items);
 
     return {
       levelId: resolved.id,
@@ -72,6 +77,8 @@
       shuffleLeft: 3,
       moveLeft: 3,
       reserveLeft: 2,
+      physicsSeed: Math.floor(random() * 0x7fffffff) || 1,
+      physicsStep: 0,
       startedAt: Date.now(),
       elapsed: 0,
       status: "playing",
@@ -97,13 +104,27 @@
         savedEntries.forEach(item => {
           item.asset = currentAssets.get(item.type);
         });
-        if (saved.layoutVersion !== LAYOUT_VERSION) {
+        if (saved.layoutVersion !== 4 && saved.layoutVersion !== LAYOUT_VERSION) {
           const active = placeItems(saved.items.filter(item => !item.selected), resolved, random);
           const selected = placeItems(saved.items.filter(item => item.selected), resolved, random);
           const migrated = new Map([...active, ...selected].map(item => [item.uid, item]));
           saved.items = saved.items.map(item => migrated.get(item.uid));
-          saved.layoutVersion = LAYOUT_VERSION;
         }
+        physics.ensurePhysicsState(saved.items);
+        saved.items.forEach(item => {
+          item.motionState = "stable";
+          item.isFalling = false;
+          item.vx = 0;
+          item.vy = 0;
+          item.vz = 0;
+          item.angularVelocity = 0;
+          item.visualX = item.x;
+          item.visualY = item.y;
+        });
+        physics.rebuildRelations(saved.items);
+        saved.layoutVersion = LAYOUT_VERSION;
+        saved.physicsSeed = Number.isFinite(saved.physicsSeed) ? saved.physicsSeed : Math.floor(random() * 0x7fffffff) || 1;
+        saved.physicsStep = Number.isFinite(saved.physicsStep) ? saved.physicsStep : 0;
         if (!saved.theme || typeof saved.theme !== "object") {
           saved.theme = mechanics.createThemeState(resolved, saved.items, random);
         }
